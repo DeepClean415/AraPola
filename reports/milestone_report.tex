@@ -72,11 +72,11 @@ Our initial analysis focused on the distribution of the polarization labels. By 
 
 During the EDA stage, we also examined linguistic and structural artifacts common in Arabic social media content. Notably, many texts contained multilingual elements, including Latin characters and both Arabic-Indic and Western digits, suggesting frequent code-switching. We quantified the presence of these elements and produced label-wise breakdowns to determine whether particular classes exhibited more multilingual behavior (see Figure~\ref{fig:latin_presence}). In addition, we evaluated the prevalence of social media markers such as URLs, user mentions, and hashtags. These elements appeared at non-trivial rates and were shown to vary modestly across classes (Figure~\ref{fig:mention_presence}). A similar analysis was conducted for emoji usage; while emojis occurred less frequently overall, a meaningful proportion of texts still included at least one emoji (Figure~\ref{fig:emoji_presence}). We extracted representative sets and computed distribution statistics to determine whether emojis should be preserved, removed, or normalized during preprocessing.
 
-With these insights established, we designed a two-tier preprocessing pipeline. In the first stage, the \textit{ArabicBasicPreprocessor} standardizes orthographic variants—such as unifying different forms of alif and ya to reduce script-level inconsistency \cite{Alansary2025}—removes diacritics and tatweel to limit sparsity and improve token matching \cite{Shammari2007}, and produces a normalized representation of each text. Empirically, this stage consistently reduced character-level noise in user-generated Arabic \cite{Shammari2007} and yielded a clean version of the dataset suitable for downstream modeling. Qualitative inspection indicated that core linguistic content was preserved and that label integrity remained unaffected \cite{Hasan2025}.
+With these insights established, we designed a two-tier preprocessing pipeline. In the first stage, the \textit{ArabicBasicPreprocessor} standardizes orthographic variants-such as unifying different forms of alif and ya to reduce script-level inconsistency \cite{Alansary2025}-removes diacritics and tatweel to limit sparsity and improve token matching \cite{Shammari2007}, and produces a normalized representation of each text. Empirically, this stage consistently reduced character-level noise in user-generated Arabic \cite{Shammari2007} and yielded a clean version of the dataset suitable for downstream modeling. Qualitative inspection indicated that core linguistic content was preserved and that label integrity remained unaffected \cite{Hasan2025}.
 
 Building on this foundation, we implemented a more fine-grained preprocessing workflow using the CAMeL Tools morphological analyzer. CAMeL Tools is an open-source Python toolkit from the CAMeL Lab that provides tokenization, morphological analysis and disambiguation, diacritization, dialect identification, and other utilities for Arabic NLP \cite{obeid2020cameltools}. We rely on its lexicon-backed analyzer to support clitic segmentation and expose morphological features across MSA and major dialects. This \textit{advanced preprocessing} stage involved pronominal clitic segmentation, controlled retention of articles and particles, and enriched morphological analysis. Executing this pipeline in batch mode allowed us to generate expanded token sequences and derive new text variants, including fully segmented and morphologically annotated versions. The advanced processed datasets showed an expected increase in token counts due to explicit clitic separation (see Figure~\ref{fig:preprocessing_comparison}). To ensure the reliability of the morphological annotations, we performed targeted verification on a curated set of examples, examining part-of-speech tags, lemmas, roots, glosses, and gender/number features. These checks confirmed stable analyzer performance for the majority of common dialectal and MSA constructions.
 
-Together, the EDA findings and the layered preprocessing strategy provide a robust foundation for model training. They also highlight the importance of addressing the linguistic richness and inherent variability of Arabic social media text—factors that directly influence the effectiveness of downstream polarization detection.
+Together, the EDA findings and the layered preprocessing strategy provide a robust foundation for model training. They also highlight the importance of addressing the linguistic richness and inherent variability of Arabic social media text-factors that directly influence the effectiveness of downstream polarization detection.
 
 
 \section{Approach}
@@ -121,7 +121,7 @@ The distribution of the workload and their status are as follows:
 
 \paragraph{Model Training} Fine-tune the BDB model on the official Arabic and English dataset using both weighted and contrastive loss configurations to handle class imbalance and improve classification performance. \textit{Status: In Progress. Responsible: Nuh Al Sharafi}
 
-\paragraph{Testing and Optimization} Evaluate the trained models on the development and test sets, perform hyperparameter tuning, and apply optimization strategies to enhance the Macro F1 score and overall model robustness. \textit{Status: Planned. Responsible: Hussein MH Nasser}
+\paragraph{Testing and Optimization} Evaluate the trained models on the development and test sets, perform hyperparameter tuning, and apply optimization strategies to enhance the Macro F1 score and overall model robustness. \textit{Status: In Progress. Responsible: Hussein MH Nasser}
 
 \section{Conclusion}
 
@@ -131,6 +131,8 @@ A final report will document our complete methodology, experimental results, and
 \section*{Acknowledgments}
 
 We thank the organizers of POLAR @ SemEval-2026 for providing the datasets and evaluation framework for this shared task.
+
+\clearpage
 
 \bibliographystyle{acl_natbib}
 \begin{thebibliography}{10}
@@ -200,7 +202,6 @@ O.~Obeid, K.~Eryani, N.~Zalmout, S.~Khalifa, D.~Taji, B.~Alhafni, B.~AlKhamissi,
 \newblock CAMeL Tools: An Open Source Python Toolkit for Arabic Natural Language Processing.
 \newblock In \emph{Proceedings of the 12th Language Resources and Evaluation Conference (LREC 2020)}, Marseille, France.
 
-% Added references for preprocessing claims
 \bibitem[Alansary et~al.(2025)]{Alansary2025}
 S.~Alansary, et~al.
 \newblock 2025.
@@ -219,6 +220,8 @@ M.~Hasan, et~al.
 \newblock \emph{Jurnal UMSU}.
 
 \end{thebibliography}
+
+\clearpage
 
 \section*{Appendix: Data Figures and Outputs}
 
