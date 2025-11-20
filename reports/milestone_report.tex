@@ -64,6 +64,8 @@ This dataset is particularly well suited to our objectives for several reasons. 
 
 In addition, in order to have a wider range of data, we used the official English dataset provided by the organizers, and translated it into a variety of Arabic dialects using OpenL translation API to serve as supplementary training data. This translated corpus expands our training pool, supporting the development of models with improved robustness and cross-linguistic understanding.
 
+The Arabic dataset contains 3,380 entries with three columns: id, text, and polarization (with binary values 1 and 0). The English dataset, which we translated to Arabic, has the same structure with 2,676 entries, providing additional training data that complements the original Arabic corpus.
+
 \section{Exploratory Data Analysis and Preprocessing}
 
 To better understand the characteristics of the dataset and prepare it for model training, we conducted a multi-stage exploratory data analysis (EDA) followed by both basic and advanced preprocessing tailored to the challenges of Arabic user-generated text. This process allowed us to diagnose the dataset’s structural properties, identify sources of noise, and iteratively refine the cleaning pipeline.
