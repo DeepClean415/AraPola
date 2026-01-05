@@ -1,0 +1,622 @@
+% To compile with official ACL style:
+% 1. Download acl.sty from https://github.com/acl-org/acl-style-files
+% 2. Uncomment the line below and comment out the article line
+% \documentclass[11pt,a4paper]{article}
+%\usepackage[hyperref]{acl}
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{latexsym}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{amsmath}
+
+% Arabic text support
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{english}
+\setotherlanguage{arabic}
+% Set Arabic font
+\newfontfamily\arabicfont[Script=Arabic,Scale=1.1]{Amiri}
+% Use system default serif font (usually works everywhere)
+\setmainfont{Liberation Serif}
+% Fallback if Liberation Serif not available
+\defaultfontfeatures{Ligatures=TeX}
+
+% Define \And command for multiple authors (ACL compatibility)
+% Use \renewcommand since amsmath already defines \And
+\renewcommand{\And}{\end{tabular}\hskip 1em \begin{tabular}[t]{c}}
+
+\title{Polarization Detection and Characterization at POLAR @ SemEval-2026\\
+\large{\textit{Final Report}}}
+
+\author{
+  \begin{tabular}[t]{c}
+    Guanghui Ma \\
+    \texttt{guanghui.ma@sabanciuniv.edu}
+  \end{tabular}
+  \And
+  \begin{tabular}[t]{c}
+    Nuh Al Sharafi \\
+    \texttt{nuh.sharafi@sabanciuniv.edu}
+  \end{tabular}
+  \And
+  \begin{tabular}[t]{c}
+    Ali Khaled A. Ishtay Altamimi \\
+    \texttt{ali.altamimi@sabanciuniv.edu}
+  \end{tabular}
+  \And
+  \begin{tabular}[t]{c}
+    Hussein MH Nasser \\
+    \texttt{h.nasser@sabanciuniv.edu}
+  \end{tabular}
+}
+
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This report presents our systems for SemEval-2026 Task~9 (POLAR) on the Arabic (ARB) track.
+We address Subtask~1 (binary polarization detection) and extend to Subtasks~2--3 (multi-label polarization type and manifestation).
+Our best Subtask~1 system fine-tunes MARBERTv2 with a stratified K-fold ensemble (soft voting), achieving
+\textbf{macro precision 0.835}, \textbf{macro recall 0.839}, and \textbf{macro F1 0.834} on internal cross-validation.
+For Subtask~2, we first explored prompt-based classification with an Arabic GPT-style model, then obtained our best results by
+reusing the MARBERTv2 encoder for multi-label learning with \textbf{Asymmetric Loss (ASL)} to suppress easy-negative noise,
+\textbf{snapshot ensembling} (cosine restarts), a \textbf{logistic-regression meta-learner} over stacked probabilities, and
+\textbf{per-label threshold tuning}. This meta-ensemble achieves \textbf{macro F1 0.6788} on an internal validation split.
+We also describe an initial prompt-based baseline for Subtask~3 and discuss preprocessing trade-offs for Arabic social media text,
+where excessive normalization may remove stylistic cues that correlate with polarized/toxic language.
+\end{abstract}
+
+\section{Introduction}
+
+Polarization refers to the divergence of attitudes away from the center toward more extreme group-aligned positions. In online settings, anonymity, rapid information diffusion, and algorithmic amplification can increase hostile inter-group discourse and intensify the spread of harmful narratives. Detecting polarization in multilingual and multi-cultural social media contexts is therefore important for content moderation. Being able to detect polarization across different languages and cultures, is challenging as it manifests differently,  making this an important area of research.
+
+This report describes our work in POLAR @ SemEval-2026 (Task~9): Detecting Multilingual, Multicultural, and Multievent Online Polarization \cite{polar-semeval-2026}. We focus exclusively on the Arabic (ARB) dataset and address all three subtasks with varying degrees of depth. Subtask 1 involves binary classification to determine whether a social media post exhibits polarized language. For this subtask, we developed an extensive ensemble approach based on fine-tuning MARBERTv2 with stratified K-fold cross-validation and soft voting, achieving strong performance with a macro F1-score of 0.834. We also explored hybrid models combining transformer-based representations with traditional machine learning on morphological features extracted via CAMeL Tools, though these did not yield substantial improvements over the pure transformer ensemble.
+
+For Subtask 2, which requires multi-label classification of polarization types (political, racial/ethnic, religious, gender/sexual, and other), we initially explored prompt-based approaches using AraGPT2 before developing a sophisticated system combining Asymmetric Loss to handle class imbalance, snapshot ensembling with cosine restarts, a stacked meta-learner, and per-label threshold tuning. This approach achieved a macro F1-score of 0.6788 on our validation set, demonstrating effective handling of the multi-label nature and class imbalance inherent in this subtask.
+
+Subtask 3, which involves predicting manifestations of polarization (stereotype, vilification, dehumanization, extreme language, lack of empathy, and invalidation), received less extensive treatment due to time constraints. We provide an initial prompt-based baseline using AraGPT2, achieving modest results with a macro F1-score around 0.54. The weaker performance on this subtask highlights the complexity of identifying fine-grained linguistic manifestations of polarization and suggests directions for future work.
+
+Beyond reporting final metrics, this report documents our experimental process, including preprocessing decisions for Arabic social media text, feature engineering attempts, and lessons learned about the trade-offs between linguistic normalization and preservation of stylistic cues that correlate with polarized content. We provide detailed descriptions of our methods and ablation studies to facilitate reproducibility and inform future research on Arabic polarization detection.
+
+\section{Related Work}
+
+Polarization detection overlaps with stance detection, toxicity modeling, and hate-speech research, but is distinct in targeting
+language that intensifies inter-group division and hostility \cite{vasist2023polarizing}.
+In Arabic NLP, dialectal variation, orthographic ambiguity, and code-switching complicate modeling \cite{farghaly2009arabic}.
+Transformer models pretrained on Arabic social media have become the dominant approach; MARBERT and its variants are particularly effective
+because they are trained on large amounts of dialectal user-generated content \cite{abdulmageed2021arbert,alshenafi2024rasid}.
+For prompt-based baselines, AraGPT2 is an Arabic GPT-style language model that can be adapted for generative classification \cite{antoun2021aragpt2,alhariri2024smash}.
+On the preprocessing side, CAMeL Tools provides robust morphological analysis and segmentation utilities for Arabic \cite{obeid2020cameltools}.
+Finally, for multi-label learning under class imbalance and negative-label noise, Asymmetric Loss (ASL) down-weights easy negatives and can improve macro-F1 \cite{ridnik2021asl}.
+
+\section{Methodology}
+
+\subsection{Task Definition and Dataset}
+
+POLAR defines three subtasks for multilingual polarization detection. Subtask 1 is binary classification: determine whether a text is polarized or non-polarized. Subtask 2 is multi-label classification over polarization types and targets, including political, racial/ethnic, religious, gender/sexual, and other categories. Subtask 3 is multi-label classification over polarization manifestations: stereotype, vilification, dehumanization, extreme language, lack of empathy, and invalidation. The official shared-task metric for all subtasks is macro F1 \cite{polar-semeval-2026}.
+
+We use only the official Arabic (ARB) data released by the organizers.
+For Subtask~1, the labeled training set contains \textbf{3,380} instances with columns \texttt{id}, \texttt{text}, and \texttt{polarization}.
+From our training splits, the class distribution is moderately imbalanced with \textbf{1,868} non-polarized vs.\ \textbf{1,512} polarized instances.
+
+For Subtask~2, the labeled training set has the same instance count (\textbf{3,380}) with five binary label columns
+(\texttt{political}, \texttt{racial/ethnic}, \texttt{religious}, \texttt{gender/sexual}, \texttt{other}).
+The provided development file used for submission is unlabeled and contains \textbf{169} instances in our pipeline.
+Subtask~3 follows the same format with six binary label columns (manifestations).
+
+\subsection{Exploratory Data Analysis}
+
+We performed exploratory analysis to understand the properties of Arabic social-media text and its interaction with labels.
+Consistent with user-generated content, texts are typically short with a long-tail of longer entries (Appendix Figure~\ref{fig:text_length_dist}).
+We also observed frequent code-switching (Latin characters and mixed digits) and common social-media artifacts such as URLs, mentions, and hashtags
+(Appendix Figures~\ref{fig:latin_presence} and~\ref{fig:mention_presence}).
+These observations motivated (i) a robust normalization strategy for noisy text and (ii) model choices that are known to work well for dialectal Arabic.
+
+\subsection{Preprocessing and Feature Engineering}
+
+\subsubsection{Basic vs.\ Advanced Preprocessing}
+
+We implemented and tested two preprocessing pipelines:
+
+\paragraph{Basic preprocessing (used in best models).}
+Our basic pipeline performs light Arabic normalization while preserving stylistic cues that may correlate with polarization/toxicity.
+In practice, it includes removing excessive whitespace and non-text artifacts, normalizing common Arabic character variants,
+and handling diacritics/tatweel to reduce sparsity \cite{Shammari2007}.
+We keep expressive signals (e.g., emojis, repeated characters) when possible because they can reflect intensity.
+
+\paragraph{Advanced preprocessing (tested, then discarded for final models).}
+We implemented an advanced pipeline using CAMeL Tools \cite{obeid2020cameltools} with morphological analysis and clitic segmentation.
+Our \texttt{ArabicAdvancedPreprocessor} can split enclitics (default: pronominal clitics), optionally split proclitics, and optionally apply lemmatization
+(\texttt{ArbPreAdv.py}).
+While linguistically appealing, we found that \textbf{over-processing can remove or distort surface cues}
+(e.g., dialect spelling, emphatic elongation) that are predictive for polarized content.
+We therefore proceeded with basic preprocessing for the final system (see Appendix Figure~\ref{fig:preprocessing_comparison}).
+
+\subsubsection{Feature Engineering}
+
+In addition to transformer fine-tuning, we implemented a feature engineering module (\texttt{feature\_engineering.py}) that computes:
+(i) a dialect-normalized text variant (mapping common dialectal variants to an MSA-friendly form), and
+(ii) a lexicon-based toxicity hit ratio (fraction of tokens matching a curated toxic lexicon).
+We used these features for analysis and as part of early baselines; however, transformer fine-tuning with ensembling ultimately performed best.
+
+\subsection{Model Selection and Training Approaches}
+
+\subsubsection{Subtask 1: Binary Polarization Detection}
+
+Our best Subtask~1 approach fine-tunes MARBERTv2 (\texttt{UBC-NLP/MARBERTv2}) for binary sequence classification.
+To reduce variance and improve robustness under moderate class imbalance, we train a stratified K-fold ensemble and average predicted probabilities
+(\textit{soft voting}). We used K=8 in our final setup.
+
+\paragraph{Training configuration.}
+We tokenize with maximum length 128, train for 4 epochs with learning rate $2\times10^{-5}$, batch size 16,
+warmup steps 500, and weight decay 0.01. We use mixed precision when available.
+
+\paragraph{Morphological feature exploration.}
+We also explored a hybrid approach combining transformer-based models with traditional machine learning classifiers using morphological features.
+Using CAMeL Tools~\cite{obeid2020cameltools}, we extracted 20 morphological features from each text, including:
+\begin{itemize}
+\item Part-of-speech (POS) ratios: noun, verb, adjective, adverb, particle, and pronoun frequencies.
+\item Clitic patterns: proclitic (e.g., definite article \textit{al-}, conjunctions, prepositions) and enclitic (e.g., possessive/pronominal suffixes) ratios.
+\item Morphological complexity: average morphemes per word, unique lemma ratio, and clitic-to-word ratio.
+\item Structural indicators: sentence length, word count, and punctuation density.
+\end{itemize}
+
+We trained gradient boosting models (XGBoost, LightGBM) on these morphological features and experimented with four hybrid ensemble strategies:
+(i)~\textbf{weighted averaging} of transformer and ML probabilities with various weight combinations;
+(ii)~\textbf{stacking with a meta-learner} (logistic regression) over both models' predictions and confidence scores;
+(iii)~\textbf{confidence-based selection}, choosing the prediction from the model with higher confidence; and
+(iv)~\textbf{adaptive weighted ensembling}, dynamically weighting models proportionally to their per-sample confidence.
+
+Our analysis revealed that certain morphological features correlate with polarized content---in particular, higher verb ratios
+and certain clitic patterns showed statistically significant differences between polarized and non-polarized texts
+(see Figure~\ref{fig:morph_feature_importance} for feature importances and Figure~\ref{fig:morph_roc_comparison} for ROC comparison).
+However, in our experiments, the hybrid ensemble did not consistently outperform the pure MARBERTv2 K-fold ensemble
+(Figure~\ref{fig:morph_ensemble_cm} shows confusion matrices for all ensemble strategies).
+We attribute this to MARBERTv2's strong performance on dialectal Arabic already capturing much of the relevant linguistic signal,
+and the relatively small gains from morphological features not justifying the added complexity.
+Nonetheless, the morphological analysis provided valuable interpretability insights and identified challenging cases where both models fail
+(Figure~\ref{fig:morph_prediction_analysis}), which could inform future data collection and model improvement efforts.
+
+\subsubsection{Subtask 2: Multi-label Polarization Type}
+
+\paragraph{Prompt-based baseline.}
+We first attempted a prompt-based multi-label classifier using AraGPT2-medium \cite{antoun2021aragpt2}.
+AraGPT2 was chosen for its generative capabilities and prior success in Arabic NLP tasks, as well as its manageable size for experimentation in comparison to larger arabic models such as acegpt and aragpt3.
+We posed a yes/no decision per label using Arabic instructions and few-shot examples, the model would generate answers for each label, and we would parse the outputs to obtain binary predictions of presence/absence of the label.
+
+The prompt format was as follows:
+\begin{quote}
+\textarabic{
+النص: "الحكومة فاسدة والشعب مظلوم"\\
+السؤال: هل يحتوي على الاستقطاب السياسي؟\\
+الإجابة: نعم، يحتوي على الاستقطاب السياسي
+
+النص: "الطقس جميل اليوم"\\
+السؤال: هل يحتوي على الاستقطاب السياسي؟\\
+الإجابة: لا، لا يحتوي على الاستقطاب السياسي
+
+ملاحظة: يجب أن يتعلق بالسياسة أو الحكومة أو الأحزاب السياسية.
+
+النص: "رئيس الدولة كافر والشعب ساكت"\\
+السؤال: هل يحتوي على الاستقطاب السياسي؟\\
+الإجابة:
+}
+\end{quote}
+In english this translates to:
+\begin{quote}
+  Text: "The government is corrupt and the people are oppressed"
+Question: Does it contain political polarization?
+Answer: Yes, it contains political polarization
+
+Text: "The weather is nice today"
+Question: Does it contain political polarization?
+Answer: No, it does not contain political polarization
+
+Note: It should relate to politics, government, or political parties.
+
+Text: "The head of state is an infidel and the people are silent"
+Question: Does it contain political polarization?
+Answer:
+\end{quote}
+
+As AraGPT2 is not fine-tuned for classification, this approach served as a baseline, by giving the model two examples per label (one positive, one negative), pulled directly from the dataset, and a hint about the label's scope in the form of a 'note' which differs for each label and helps the model understand the context of the label.
+
+This approach yielded modest results, with macro F1 scores hovering around .4 to .43 on the test set, these are the results achieved after experimentation with parsing strategies, prompt variations and temperature settings.
+
+
+\paragraph{Best system: MARBERTv2 + ASL + snapshot ensemble + stacking + thresholds.}
+Our strongest Subtask~2 system adapts MARBERTv2 to multi-label classification and combines four components:
+
+\begin{itemize}
+\item \textbf{Loss: Asymmetric Loss (ASL).} We replace standard BCE with ASL \cite{ridnik2021asl} to reduce easy-negative dominance.
+In our implementation, $\gamma_{\text{neg}}=4.0$, $\gamma_{\text{pos}}=1.0$, with clipping $c=0.05$:
+\begin{align}
+p &= \sigma(z), \\
+\mathcal{L}_{\text{ASL}} &= -\Big[(1-p)^{\gamma_{\text{pos}}}y\log(p) + p^{\gamma_{\text{neg}}}(1-y)\log(1-p)\Big],
+\end{align}
+with a probability clipping step on $(1-p)$ for stability (see \texttt{Final\_subtask2.ipynb}).
+
+\item \textbf{Snapshot ensembles.} During training, we save $S=4$ snapshots using a cosine schedule with restarts
+(\texttt{lr\_scheduler\_type = cosine\_with\_restarts}). This yields multiple diverse checkpoints without retraining from scratch.
+
+\item \textbf{Meta-learner (stacking).} We stack snapshot probabilities on the validation set and train a One-vs-Rest logistic regression
+(\texttt{solver=liblinear}, \texttt{max\_iter=2000}) to combine snapshots into better-calibrated per-label probabilities.
+
+\item \textbf{Per-label threshold tuning.} Instead of a global 0.5 threshold, we grid-search thresholds per label on the validation set
+to maximize per-label F1, then apply these thresholds for final predictions.
+\end{itemize}
+
+\paragraph{Training configuration.}
+We use max length 256, epochs 4, learning rate $2\times10^{-5}$, batch size 16, warmup steps 500, and weight decay 0.01.
+
+\subsubsection{Subtask 3: Multi-label Manifestations}
+
+For Subtask~3, we implemented an initial prompt-based baseline using the same AraGPT2-medium framework as Subtask~2, but with manifestation labels
+and label-specific hints.
+Due to time constraints, Subtask~3 was not optimized to the same extent as Subtasks~1--2.
+The general format mirrors Subtask~2 but with manifestation labels instead of polarization types.
+
+Below is an example prompt for the \textit{stereotype} label:
+\begin{quote}
+\textarabic{
+النص: "كل اللاجئين كسالى ولا يعملون"\\
+السؤال: هل يحتوي على القوالب النمطية؟\\
+الإجابة: نعم، يحتوي على القوالب النمطية
+
+النص: "الطقس جميل اليوم والناس سعداء"\\
+السؤال: هل يحتوي على القوالب النمطية؟\\
+الإجابة: لا، لا يحتوي على القوالب النمطية
+
+ملاحظة: يجب أن يحتوي على تعميم واضح عن مجموعة من الناس.
+
+النص: "هؤلاء القوم دائماً يسببون المشاكل"\\
+السؤال: هل يحتوي على القوالب النمطية؟\\
+الإجابة:
+}
+\end{quote}
+
+In english this translates to:
+\begin{quote}
+  Text: "All refugees are lazy and do not work"
+Question: Does it contain stereotypes?
+Answer: Yes, it contains stereotypes
+
+Text: "The weather is nice today and people are happy"
+Question: Does it contain stereotypes?
+Answer: No, it does not contain stereotypes
+
+Note: It should contain a clear generalization about a group of people.
+
+Text: "These people always cause trouble"
+Question: Does it contain stereotypes?
+Answer:
+\end{quote}
+
+As with subtask 2, this prompt is repeated for each of the six manifestation labels with appropriate label-specific hints.
+
+Results from this initial prompt-based Subtask~3 system are modest, with macro F1 scores around .54 on the train set validation split.
+
+\subsection{Experimental Setup}
+
+All transformer models are trained using Hugging Face \texttt{transformers}.
+Subtask~1 uses stratified K-fold cross-validation; Subtask~2 uses a 85/15 train/validation split
+because the official dev set is unlabeled and intended for submission.
+
+\paragraph{Hardware.}
+All training runs were performed on Google Colab using an NVIDIA L4 GPU (24\,GB VRAM).
+Mixed-precision training (FP16) was enabled to reduce memory usage and accelerate training.
+
+\section{Results}
+
+Following the CS445 report guidelines, we report F1-score, macro precision, and macro recall; and we include confusion matrices and PR curves (Appendix).
+
+\subsection{Subtask 1}
+
+Table~\ref{tab:subtask1_results} reports mean macro precision/recall/F1 over our internal K-fold validation.
+We observed that soft-voting ensembles are consistently more stable than single fine-tuned checkpoints.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{System} & \textbf{Macro P} & \textbf{Macro R} & \textbf{Macro F1} \\
+\midrule
+MARBERTv2 + Stratified K-fold Ensemble & 0.835 & 0.839 & 0.834 \\
+\bottomrule
+\end{tabular}
+\caption{Subtask~1 internal validation performance (macro-averaged). Values are computed from fold-wise classification reports.}
+\label{tab:subtask1_results}
+\end{table}
+
+\subsection{Subtask 2}
+
+Table~\ref{tab:subtask2_perlabel} reports per-label precision/recall/F1 with tuned thresholds, and Table~\ref{tab:subtask2_overall}
+reports overall validation scores. Our meta-ensemble improves substantially over a simple snapshot average.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Label} & \textbf{Thr.} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} \\
+\midrule
+political       & 0.33 & 0.747 & 0.881 & 0.808 \\
+racial/ethnic   & 0.39 & 0.677 & 0.663 & 0.670 \\
+religious       & 0.27 & 0.611 & 0.579 & 0.595 \\
+gender/sexual   & 0.27 & 0.603 & 0.679 & 0.639 \\
+other           & 0.44 & 0.792 & 0.600 & 0.683 \\
+\bottomrule
+\end{tabular}
+\caption{Subtask~2 per-label validation metrics and tuned thresholds from \texttt{Final\_subtask2.ipynb}.}
+\label{tab:subtask2_perlabel}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{System} & \textbf{Macro F1} & \textbf{Micro F1} & \textbf{Weighted F1} \\
+\midrule
+Snapshot Avg. (no meta) & 0.3818 & --- & --- \\
+Meta-ensemble (ASL + snapshots + LR + thr.) & 0.6788 & 0.7092 & 0.7059 \\
+\bottomrule
+\end{tabular}
+\caption{Subtask~2 overall validation metrics.}
+\label{tab:subtask2_overall}
+\end{table}
+
+\subsection{Subtask 3}
+
+Results from the initial prompt-based Subtask~3 system are modest, with macro F1 scores around .54 on the train set validation split. Due to time constraints, we did not develop more sophisticated models for this subtask.
+
+\section{Discussion}
+
+\paragraph{Dataset selection and impact.}
+Restricting to ARB ensures consistent linguistic phenomena (dialects, orthography) and reduces domain mismatch.
+However, label sparsity and multi-label imbalance in Subtasks~2--3 make macro-F1 optimization challenging. The relatively small dataset size (3,380 instances) limits the ability to train large models from scratch but is well-suited for fine-tuning pretrained transformers like MARBERTv2.
+
+\paragraph{Selection of approach: advantages and disadvantages.}
+We chose MARBERTv2 as our primary model because it is specifically pretrained on dialectal Arabic social media text, making it well-suited for our task. The advantages include: (i) strong baseline performance without extensive feature engineering, (ii) ability to capture contextual nuances in Arabic dialects, and (iii) efficient fine-tuning with limited data. The main disadvantages are: (i) computational requirements for training multiple folds/snapshots, (ii) limited interpretability compared to feature-based models, and (iii) potential overfitting to training distribution given the moderate dataset size.
+
+Our ensemble strategies (K-fold for Subtask 1, snapshot ensembling for Subtask 2) provide robustness at the cost of increased training time and complexity. The ASL loss function effectively handles class imbalance but requires careful hyperparameter tuning.
+
+\paragraph{Comparison to existing systems.}
+Our Subtask~1 macro F1 of 0.834 represents strong performance on binary polarization detection. The hybrid approach combining morphological features with transformers showed that MARBERTv2 already captures most linguistic signals, though morphological analysis provided valuable interpretability. For Subtask~2, our meta-ensemble with ASL achieved 0.6788 macro F1, substantially outperforming the simple snapshot average (0.3818) and the AraGPT2 prompt baseline (0.40-0.43), demonstrating the value of our multi-component approach.
+
+\paragraph{Morphological features and hybrid ensembles.}
+Our morphological feature exploration revealed interpretable patterns: polarized texts tend to exhibit higher verb ratios, more emphatic constructions,
+and distinctive clitic usage compared to non-polarized texts. Statistical analysis (t-tests) confirmed significant differences in several morphological dimensions.
+When combined with MARBERTv2 via weighted averaging or stacking, the hybrid ensemble occasionally improved on individual difficult cases where both models
+initially failed. However, the overall macro-F1 improvement was marginal (typically $<$1\%), suggesting that MARBERTv2's contextual embeddings already
+implicitly capture most morphological signals. The morphological analysis nonetheless proved valuable for error analysis---we identified consistently
+misclassified samples and characterized their linguistic properties (e.g., shorter text length, specific POS distributions), which could guide future
+data augmentation or targeted model improvements.
+
+\paragraph{Preprocessing trade-offs.}
+We found that heavy morphological processing can reduce performance by removing surface-level intensity cues (elongations, creative spelling),
+and by producing token sequences that may be less aligned with MARBERT’s pretraining distribution.
+A light normalization strategy preserved these cues and yielded stronger results.
+
+\paragraph{Why ensembling helped.}
+For Subtask~1, fold ensembling reduced variance and improved stability across splits.
+For Subtask~2, snapshot diversity plus stacking improved probability calibration and made per-label thresholding effective.
+
+\paragraph{Limitations of the proposed system.}
+Our Subtask~3 system remains a baseline and likely underperforms fine-tuned discriminative models.
+Across all subtasks, several limitations persist: (i) sarcasm and implicit polarization are difficult to detect, (ii) context-dependent references require external knowledge, (iii) our internal validation may not fully reflect real-world performance due to distribution shift, and (iv) the system is language-specific and does not generalize to other languages without retraining.
+
+\paragraph{Potential improvements with more time and resources.}
+With additional time and resources, we would: (i) implement a MARBERTv2 multi-label model for Subtask~3 using the same ASL+snapshot+stacking approach that succeeded for Subtask~2; (ii) explore multi-task learning across all three subtasks to leverage shared representations; (iii) add calibration methods (e.g., temperature scaling) and more principled threshold optimization strategies; (iv) incorporate dialect and emoji features more directly through auxiliary prediction heads; (v) experiment with larger Arabic language models and data augmentation techniques; and (vi) conduct more extensive error analysis to identify and address systematic failure modes.
+
+\section{Conclusion}
+
+We presented systems for the Arabic track of POLAR @ SemEval-2026 Task~9 on polarization detection.
+Our best Subtask~1 model, a MARBERTv2 stratified K-fold ensemble, achieved macro F1 0.834 on internal validation through soft voting and careful handling of class imbalance.
+For Subtask~2, we demonstrated that combining Asymmetric Loss, snapshot ensembling, stacked meta-learning, and per-label threshold tuning yields strong multi-label performance (macro F1 0.6788), substantially outperforming simpler baselines.
+
+Key findings include: (i) light preprocessing preserves important stylistic cues for polarization detection, (ii) MARBERTv2's dialectal Arabic pretraining provides strong baseline performance that captures most morphological signals, and (iii) ensemble methods and specialized loss functions are crucial for handling class imbalance in multi-label settings.
+
+Future work will focus on developing optimized discriminative models for Subtask~3 and exploring multi-task learning to leverage shared representations across all three subtasks.
+
+\section{Individual Contributions}
+
+\begin{itemize}
+\item \textbf{Guanghui Ma:} preprocessing pipelines; feature engineering; Subtask~1 training and ensembling; report drafting.
+\item \textbf{Nuh Al Sharafi:} morphological feature analysis; hybrid ensemble exploration; model experiments and tuning; Subtask~2 development and stacking; evaluation and literature review.
+\item \textbf{Ali Khaled A. Ishtay Altamimi:} Exploratory data analysis for subtask 1 and not subtask related patterns, visualization, error analysis, and report figures.
+\item \textbf{Hussein MH Nasser:} Exploratory data analysis for subtask 1 and not subtask related patterns, visualization, error analysis, and report figures.
+\end{itemize}
+
+
+\clearpage
+
+\bibliographystyle{acl_natbib}
+\begin{thebibliography}{10}
+
+\bibitem[Abdul-Mageed et~al.(2021)]{abdulmageed2021arbert}
+Muhammad Abdul-Mageed, AbdelRahim Elmadany, and ElMoemen B.~Nagoudi.
+\newblock 2021.
+\newblock ARBERT \& MARBERT: Deep Bidirectional Transformers for Arabic.
+\newblock In \emph{Proceedings of ACL 2021}.
+
+\bibitem[AlShenaifi et~al.(2024)]{alshenafi2024rasid}
+N.~AlShenaifi, N.~Alangari, and H.~Al-Negheimish.
+\newblock 2024.
+\newblock Rasid at StanceEval: Fine-tuning MARBERT for Arabic Stance Detection.
+\newblock In \emph{Proceedings of the Second Arabic Natural Language Processing Conference}, pages 828--831.
+
+\bibitem[Al~Hariri and Abu~Farha(2024)]{alhariri2024smash}
+Y.~Al~Hariri and I.~Abu~Farha.
+\newblock 2024.
+\newblock SMASH at StanceEval 2024: Prompt Engineering LLMs for Arabic Stance Detection.
+\newblock In \emph{Proceedings of the Second Arabic Natural Language Processing Conference}, pages 800--806.
+
+\bibitem[Antoun et~al.(2021)]{antoun2021aragpt2}
+Wissam Antoun, Fady Baly, and Hazem Hajj.
+\newblock 2021.
+\newblock AraGPT2: Pre-trained Transformer for Arabic Language Generation.
+\newblock In \emph{Proceedings of WANLP 2021}.
+
+\bibitem[Farghaly and Shaalan(2009)]{farghaly2009arabic}
+Ali Farghaly and Khaled Shaalan.
+\newblock 2009.
+\newblock Arabic Natural Language Processing: Challenges and Solutions.
+\newblock In \emph{Proceedings of the 2009 Workshop on Arabic Natural Language Processing}.
+
+\bibitem[Obeid et~al.(2020)]{obeid2020cameltools}
+O.~Obeid, K.~Eryani, N.~Zalmout, S.~Khalifa, D.~Taji, B.~Alhafni, B.~AlKhamissi, and N.~Habash.
+\newblock 2020.
+\newblock CAMeL Tools: An Open Source Python Toolkit for Arabic Natural Language Processing.
+\newblock In \emph{Proceedings of LREC 2020}.
+
+\bibitem[POLAR @ SemEval(2025)]{polar-semeval-2026}
+POLAR @ SemEval.
+\newblock 2025.
+\newblock Task Description: Detecting Multilingual, Multicultural, and Multievent Online Polarization.
+
+\bibitem[Ridnik et~al.(2021)]{ridnik2021asl}
+Tal Ridnik, Emanuel Ben-Baruch, Nadav Zamir, Asaf Noy, Itamar Friedman, Matan Protter, and Lior Wolf.
+\newblock 2021.
+\newblock Asymmetric Loss for Multi-Label Classification.
+\newblock In \emph{Proceedings of ICCV 2021}.
+
+\bibitem[Vasist et~al.(2023)]{vasist2023polarizing}
+P.~N.~Vasist, D.~Chatterjee, and S.~Krishnan.
+\newblock 2023.
+\newblock The Polarizing Impact of Political Disinformation and Hate Speech: A Cross-country Configural Narrative.
+\newblock \emph{Information Systems Frontiers}, pages 1--26.
+
+\bibitem[Al-Shammari(2007)]{Shammari2007}
+E.~Al-Shammari.
+\newblock 2007.
+\newblock Arabic Text Preprocessing for Natural Language Processing Applications.
+\newblock Princess Sumaya University for Technology.
+
+\end{thebibliography}
+
+\clearpage
+
+\section*{Appendix: Figures and Outputs}
+
+% Reuse the same figure placeholders and filenames as in your milestone report.
+% Ensure the ./pics directory exists (or change paths accordingly).
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{./pics/polarization.png}
+\caption{Label distribution for Subtask~1 (ARB training).}
+\label{fig:label_dist_bar}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{./pics/text_length.png}
+\caption{Text length and word count distributions; label-wise comparisons.}
+\label{fig:text_length_dist}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{./pics/multilingual.png}
+\caption{Code-switching indicators: Latin characters and digit variants.}
+\label{fig:latin_presence}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{./pics/social_media.png}
+\caption{URLs, mentions, and hashtags by label.}
+\label{fig:mention_presence}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{./pics/emojis.png}
+\caption{Emoji presence and counts by label.}
+\label{fig:emoji_presence}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{./pics/og vs basic vs advanced preprocess.png}
+\caption{Original vs.\ basic vs.\ advanced preprocessing outputs (advanced includes clitic segmentation).}
+\label{fig:preprocessing_comparison}
+\end{figure}
+
+% Morphological Feature Analysis Figures
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{./pics/XGBoost_top_features.jpg}
+\caption{Top 15 morphological feature importances from XGBoost classifier. Verb count (\texttt{num\_verbs}) is the most predictive feature, followed by conjunctions and imperative forms.}
+\label{fig:morph_feature_importance}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{./pics/model_ROC_comparison.jpg}
+\caption{ROC curves comparing MARBERTv2, XGBoost (morphological features), and hybrid ensemble strategies. MARBERTv2 achieves AUC~0.8886, while the confidence-based hybrid slightly improves to AUC~0.8888.}
+\label{fig:morph_roc_comparison}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{./pics/Confusion_Matrices_Ensemble_Models.jpg}
+\caption{Confusion matrices for four hybrid ensemble strategies: weighted averaging (0.4/0.6), stacking meta-learner, confidence-based selection, and adaptive weighted. The weighted approach achieves the highest F1 (0.8213).}
+\label{fig:morph_ensemble_cm}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{./pics/model_prediction_comparison.jpg}
+\caption{Left: Prediction analysis showing model agreement---57.4\% of samples are correctly classified by both MARBERTv2 and XGBoost. Right: Accuracy comparison showing the best ensemble (0.8314) slightly outperforms individual models.}
+\label{fig:morph_prediction_analysis}
+\end{figure}
+
+% CS445-required outputs: confusion matrix + PR curves.
+% Export these figures from your notebooks and update paths below.
+
+% TODO: Export subtask1_confusion_matrix.png from Training_8Fold_Ensemble.ipynb
+% \begin{figure}[!htbp]
+% \centering
+% \includegraphics[width=0.75\textwidth]{./pics/subtask1_confusion_matrix.png}
+% \caption{Subtask~1 confusion matrix (exported from \texttt{Training\_8Fold\_Ensemble.ipynb}).}
+% \label{fig:subtask1_cm}
+% \end{figure}
+
+% TODO: Export subtask1_pr_curve.png from Training_8Fold_Ensemble.ipynb
+% \begin{figure}[!htbp]
+% \centering
+% \includegraphics[width=0.85\textwidth]{./pics/subtask1_pr_curve.png}
+% \caption{Subtask~1 precision--recall curve (exported from notebook).}
+% \label{fig:subtask1_pr}
+% \end{figure}
+
+% TODO: Export subtask2_pr_curves.png from Final_subtask2.ipynb
+% \begin{figure}[!htbp]
+% \centering
+% \includegraphics[width=0.95\textwidth]{./pics/subtask2_pr_curves.png}
+% \caption{Subtask~2 per-label precision--recall curves (exported from notebook).}
+% \label{fig:subtask2_pr}
+% \end{figure}
+
+\section*{Appendix: Reproducibility (Run Order)}
+
+\begin{itemize}
+\item \textbf{Basic preprocessing:} \texttt{Preprocessing\_basic.ipynb} \ $\rightarrow$ produces cleaned CSVs.
+\item \textbf{Advanced preprocessing (optional/ablations):} \texttt{ArbPreAdv.py}.
+\item \textbf{Feature engineering (optional/analysis):} \texttt{feature\_engineering.py}.
+\item \textbf{Subtask~1 training/ensemble:} \texttt{Training\_8Fold\_Ensemble.ipynb}.
+\item \textbf{Subtask~2 best system:} \texttt{Final\_subtask2.ipynb}.
+\item \textbf{Prompt baselines (Subtasks~2--3):} \texttt{subtask2\_acegpt\_single\_cell.py}, \texttt{subtask3\_acegpt\_single\_cell.py}.
+\end{itemize}
+
+\end{document}
