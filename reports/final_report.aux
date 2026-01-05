@@ -22,12 +22,12 @@
 \@writefile{toc}{\contentsline {paragraph}{Basic preprocessing (used in best models).}{2}{section*.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Advanced preprocessing (tested, then discarded for final models).}{2}{section*.2}\protected@file@percent }
 \citation{obeid2020cameltools}
+\citation{antoun2021aragpt2}
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Feature Engineering}{3}{subsection.6.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {7}Methods}{3}{section.7}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Subtask 1: Binary Polarization Detection}{3}{subsection.7.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Training configuration.}{3}{section*.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Morphological feature exploration.}{3}{section*.4}\protected@file@percent }
-\citation{antoun2021aragpt2}
 \citation{ridnik2021asl}
 \@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Subtask 2: Multi-label Polarization Type}{4}{subsection.7.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Prompt-based baseline.}{4}{section*.5}\protected@file@percent }
@@ -41,11 +41,11 @@
 \@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Subtask~1 internal validation performance (macro-averaged). Values are computed from fold-wise classification reports.}}{5}{table.1}\protected@file@percent }
 \newlabel{tab:subtask1_results}{{1}{5}{Subtask~1 internal validation performance (macro-averaged). Values are computed from fold-wise classification reports}{table.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {9.2}Subtask 2}{5}{subsection.9.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3}Subtask 3}{5}{subsection.9.3}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Subtask~2 per-label validation metrics and tuned thresholds from \texttt  {Final\_subtask2.ipynb}.}}{6}{table.2}\protected@file@percent }
 \newlabel{tab:subtask2_perlabel}{{2}{6}{Subtask~2 per-label validation metrics and tuned thresholds from \texttt {Final\_subtask2.ipynb}}{table.2}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Subtask~2 overall validation metrics.}}{6}{table.3}\protected@file@percent }
 \newlabel{tab:subtask2_overall}{{3}{6}{Subtask~2 overall validation metrics}{table.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {9.3}Subtask 3}{6}{subsection.9.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {10}Discussion}{6}{section.10}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Dataset choice and impact.}{6}{section*.9}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Morphological features and hybrid ensembles.}{6}{section*.10}\protected@file@percent }
@@ -66,24 +66,24 @@
 \bibcite{ridnik2021asl}{{8}{2021}{{Ridnik et~al.}}{{}}}
 \bibcite{vasist2023polarizing}{{9}{2023}{{Vasist et~al.}}{{}}}
 \bibcite{Shammari2007}{{10}{2007}{{Al-Shammari}}{{}}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Label distribution for Subtask~1 (ARB training).}}{10}{figure.1}\protected@file@percent }
-\newlabel{fig:label_dist_bar}{{1}{10}{Label distribution for Subtask~1 (ARB training)}{figure.1}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Text length and word count distributions; label-wise comparisons.}}{10}{figure.2}\protected@file@percent }
-\newlabel{fig:text_length_dist}{{2}{10}{Text length and word count distributions; label-wise comparisons}{figure.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Code-switching indicators: Latin characters and digit variants.}}{11}{figure.3}\protected@file@percent }
-\newlabel{fig:latin_presence}{{3}{11}{Code-switching indicators: Latin characters and digit variants}{figure.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces URLs, mentions, and hashtags by label.}}{11}{figure.4}\protected@file@percent }
-\newlabel{fig:mention_presence}{{4}{11}{URLs, mentions, and hashtags by label}{figure.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Emoji presence and counts by label.}}{11}{figure.5}\protected@file@percent }
-\newlabel{fig:emoji_presence}{{5}{11}{Emoji presence and counts by label}{figure.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Original vs.\ basic vs.\ advanced preprocessing outputs (advanced includes clitic segmentation).}}{12}{figure.6}\protected@file@percent }
-\newlabel{fig:preprocessing_comparison}{{6}{12}{Original vs.\ basic vs.\ advanced preprocessing outputs (advanced includes clitic segmentation)}{figure.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Top 15 morphological feature importances from XGBoost classifier. Verb count (\texttt  {num\_verbs}) is the most predictive feature, followed by conjunctions and imperative forms.}}{12}{figure.7}\protected@file@percent }
-\newlabel{fig:morph_feature_importance}{{7}{12}{Top 15 morphological feature importances from XGBoost classifier. Verb count (\texttt {num\_verbs}) is the most predictive feature, followed by conjunctions and imperative forms}{figure.7}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces ROC curves comparing MARBERTv2, XGBoost (morphological features), and hybrid ensemble strategies. MARBERTv2 achieves AUC~0.8886, while the confidence-based hybrid slightly improves to AUC~0.8888.}}{13}{figure.8}\protected@file@percent }
-\newlabel{fig:morph_roc_comparison}{{8}{13}{ROC curves comparing MARBERTv2, XGBoost (morphological features), and hybrid ensemble strategies. MARBERTv2 achieves AUC~0.8886, while the confidence-based hybrid slightly improves to AUC~0.8888}{figure.8}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Confusion matrices for four hybrid ensemble strategies: weighted averaging (0.4/0.6), stacking meta-learner, confidence-based selection, and adaptive weighted. The weighted approach achieves the highest F1 (0.8213).}}{14}{figure.9}\protected@file@percent }
-\newlabel{fig:morph_ensemble_cm}{{9}{14}{Confusion matrices for four hybrid ensemble strategies: weighted averaging (0.4/0.6), stacking meta-learner, confidence-based selection, and adaptive weighted. The weighted approach achieves the highest F1 (0.8213)}{figure.9}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Left: Prediction analysis showing model agreement---57.4\% of samples are correctly classified by both MARBERTv2 and XGBoost. Right: Accuracy comparison showing the best ensemble (0.8314) slightly outperforms individual models.}}{14}{figure.10}\protected@file@percent }
-\newlabel{fig:morph_prediction_analysis}{{10}{14}{Left: Prediction analysis showing model agreement---57.4\% of samples are correctly classified by both MARBERTv2 and XGBoost. Right: Accuracy comparison showing the best ensemble (0.8314) slightly outperforms individual models}{figure.10}{}}
-\gdef \@abspage@last{15}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Label distribution for Subtask~1 (ARB training).}}{9}{figure.1}\protected@file@percent }
+\newlabel{fig:label_dist_bar}{{1}{9}{Label distribution for Subtask~1 (ARB training)}{figure.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Text length and word count distributions; label-wise comparisons.}}{9}{figure.2}\protected@file@percent }
+\newlabel{fig:text_length_dist}{{2}{9}{Text length and word count distributions; label-wise comparisons}{figure.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Code-switching indicators: Latin characters and digit variants.}}{10}{figure.3}\protected@file@percent }
+\newlabel{fig:latin_presence}{{3}{10}{Code-switching indicators: Latin characters and digit variants}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces URLs, mentions, and hashtags by label.}}{10}{figure.4}\protected@file@percent }
+\newlabel{fig:mention_presence}{{4}{10}{URLs, mentions, and hashtags by label}{figure.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Emoji presence and counts by label.}}{10}{figure.5}\protected@file@percent }
+\newlabel{fig:emoji_presence}{{5}{10}{Emoji presence and counts by label}{figure.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Original vs.\ basic vs.\ advanced preprocessing outputs (advanced includes clitic segmentation).}}{11}{figure.6}\protected@file@percent }
+\newlabel{fig:preprocessing_comparison}{{6}{11}{Original vs.\ basic vs.\ advanced preprocessing outputs (advanced includes clitic segmentation)}{figure.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Top 15 morphological feature importances from XGBoost classifier. Verb count (\texttt  {num\_verbs}) is the most predictive feature, followed by conjunctions and imperative forms.}}{11}{figure.7}\protected@file@percent }
+\newlabel{fig:morph_feature_importance}{{7}{11}{Top 15 morphological feature importances from XGBoost classifier. Verb count (\texttt {num\_verbs}) is the most predictive feature, followed by conjunctions and imperative forms}{figure.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces ROC curves comparing MARBERTv2, XGBoost (morphological features), and hybrid ensemble strategies. MARBERTv2 achieves AUC~0.8886, while the confidence-based hybrid slightly improves to AUC~0.8888.}}{12}{figure.8}\protected@file@percent }
+\newlabel{fig:morph_roc_comparison}{{8}{12}{ROC curves comparing MARBERTv2, XGBoost (morphological features), and hybrid ensemble strategies. MARBERTv2 achieves AUC~0.8886, while the confidence-based hybrid slightly improves to AUC~0.8888}{figure.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Confusion matrices for four hybrid ensemble strategies: weighted averaging (0.4/0.6), stacking meta-learner, confidence-based selection, and adaptive weighted. The weighted approach achieves the highest F1 (0.8213).}}{13}{figure.9}\protected@file@percent }
+\newlabel{fig:morph_ensemble_cm}{{9}{13}{Confusion matrices for four hybrid ensemble strategies: weighted averaging (0.4/0.6), stacking meta-learner, confidence-based selection, and adaptive weighted. The weighted approach achieves the highest F1 (0.8213)}{figure.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Left: Prediction analysis showing model agreement---57.4\% of samples are correctly classified by both MARBERTv2 and XGBoost. Right: Accuracy comparison showing the best ensemble (0.8314) slightly outperforms individual models.}}{13}{figure.10}\protected@file@percent }
+\newlabel{fig:morph_prediction_analysis}{{10}{13}{Left: Prediction analysis showing model agreement---57.4\% of samples are correctly classified by both MARBERTv2 and XGBoost. Right: Accuracy comparison showing the best ensemble (0.8314) slightly outperforms individual models}{figure.10}{}}
+\gdef \@abspage@last{14}
