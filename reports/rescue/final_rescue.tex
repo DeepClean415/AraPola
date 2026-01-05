@@ -132,10 +132,7 @@ We therefore proceeded with basic preprocessing for the further testing and even
 
 \subsubsection{Feature Engineering}
 
-In addition to transformer fine-tuning, we implemented a feature engineering module (\texttt{feature\_engineering.py}) that computes:
-(i) a dialect-normalized text variant (mapping common dialectal variants to an MSA-friendly form), and
-(ii) a lexicon-based toxicity hit ratio (fraction of tokens matching a curated toxic lexicon).
-We used these features for analysis and as part of early baselines; however, transformer fine-tuning with ensembling ultimately performed best.
+In addition to transformer fine-tuning, we implemented a feature engineering using morphological features extracted via CAMeL Tools \cite{obeid2020cameltools}. We analyzed part-of-speech ratios, clitic patterns, and POS bigrams to identify linguistic correlates of polarization. Figure~\ref{fig:morph_correlation} shows the correlation between morphological features and toxicity/polarization labels, revealing statistically significant associations. These features were used in traditional ML models and hybrid ensembles (see Section 3.4.1).
 
 \subsection{Model Selection and Training Approaches}
 
@@ -405,17 +402,16 @@ With additional time and resources, we would: (i) implement a MARBERTv2 multi-la
 \section{Conclusion}
 
 We presented systems for the Arabic track of POLAR @ SemEval-2026 Task~9 on polarization detection.
-Our best Subtask~1 model, a MARBERTv2 stratified K-fold ensemble, achieved macro F1 0.834 on internal validation through soft voting and careful handling of class imbalance.
-For Subtask~2, we demonstrated that combining Asymmetric Loss, snapshot ensembling, stacked meta-learning, and per-label threshold tuning yields strong multi-label performance (macro F1 0.6788), substantially outperforming simpler baselines.
+Our best Subtask~1 model, a MARBERTv2 stratified K-fold ensemble, achieved macro F1 0.8264 on the competition's validation set through soft voting and careful handling of class imbalance.
+For Subtask~2, we demonstrated that combining Asymmetric Loss, snapshot ensembling, stacked meta-learning, and per-label threshold tuning yields strong multi-label performance (macro F1 0.6082), substantially outperforming simpler baselines.
+For Subtask~3, our initial prompt-based baseline using AraGPT2 achieved a macro F1 of 0.2962, highlighting the complexity of identifying fine-grained linguistic manifestations of polarization.
 
 Key findings include: (i) light preprocessing preserves important stylistic cues for polarization detection, (ii) MARBERTv2's dialectal Arabic pretraining provides strong baseline performance that captures most morphological signals, and (iii) ensemble methods and specialized loss functions are crucial for handling class imbalance in multi-label settings.
-
-Future work will focus on developing optimized discriminative models for Subtask~3 and exploring multi-task learning to leverage shared representations across all three subtasks.
 
 \section{Individual Contributions}
 
 \begin{itemize}
-\item \textbf{Guanghui Ma:} Preprocessing pipelines, feature engineering, Subtask 1 training and ensembling, and report drafting, Princess “I’ll start in 45 minutes”.
+\item \textbf{Guanghui Ma:} Preprocessing pipelines, feature engineering, Subtask 1 training and ensembling, and report drafting.
 \item \textbf{Nuh Al Sharafi:} Morphological feature analysis, hybrid ensemble exploration, model experiments and tuning, Subtask 2 development and stacking, evaluation, literature review and team coordination.
 \item \textbf{Ali Khaled A. Ishtay Altamimi:} Perform exploratory data analysis (EDA) to examine label distribu-
 tion, text characteristics, and class imbalance issues in the dataset, providing insights that will inform
@@ -435,17 +431,29 @@ Muhammad Abdul-Mageed, AbdelRahim Elmadany, and ElMoemen B.~Nagoudi.
 \newblock ARBERT \& MARBERT: Deep Bidirectional Transformers for Arabic.
 \newblock In \emph{Proceedings of ACL 2021}.
 
-\bibitem[AlShenaifi et~al.(2024)]{alshenafi2024rasid}
-N.~AlShenaifi, N.~Alangari, and H.~Al-Negheimish.
-\newblock 2024.
-\newblock Rasid at StanceEval: Fine-tuning MARBERT for Arabic Stance Detection.
-\newblock In \emph{Proceedings of the Second Arabic Natural Language Processing Conference}, pages 828--831.
-
 \bibitem[Al~Hariri and Abu~Farha(2024)]{alhariri2024smash}
 Y.~Al~Hariri and I.~Abu~Farha.
 \newblock 2024.
 \newblock SMASH at StanceEval 2024: Prompt Engineering LLMs for Arabic Stance Detection.
 \newblock In \emph{Proceedings of the Second Arabic Natural Language Processing Conference}, pages 800--806.
+
+\bibitem[Al-Shammari(2007)]{Shammari2007}
+E.~Al-Shammari.
+\newblock 2007.
+\newblock Arabic Text Preprocessing for Natural Language Processing Applications.
+\newblock Princess Sumaya University for Technology.
+
+\bibitem[Alshahrani and Aksoy(2025)]{alshahrani2025adversarial}
+S.~Alshahrani and E.~Aksoy.
+\newblock 2025.
+\newblock Adversarially Robust Multitask Learning for Arabic Hate Speech.
+\newblock \emph{MDPI Applied Sciences}.
+
+\bibitem[AlShenaifi et~al.(2024)]{alshenafi2024rasid}
+N.~AlShenaifi, N.~Alangari, and H.~Al-Negheimish.
+\newblock 2024.
+\newblock Rasid at StanceEval: Fine-tuning MARBERT for Arabic Stance Detection.
+\newblock In \emph{Proceedings of the Second Arabic Natural Language Processing Conference}, pages 828--831.
 
 \bibitem[Antoun et~al.(2021)]{antoun2021aragpt2}
 Wissam Antoun, Fady Baly, and Hazem Hajj.
@@ -453,11 +461,41 @@ Wissam Antoun, Fady Baly, and Hazem Hajj.
 \newblock AraGPT2: Pre-trained Transformer for Arabic Language Generation.
 \newblock In \emph{Proceedings of WANLP 2021}.
 
+\bibitem[Charfi et~al.(2024)]{charfi2024adhar}
+A.~Charfi, M.~Boughanem, R.~Akasheh, A.~Atallah, and W.~Zaghouani.
+\newblock 2024.
+\newblock ADHAR: A Multi-Dialectal Hate Speech Corpus for Arabic.
+\newblock \emph{Frontiers in AI}.
+
 \bibitem[Farghaly and Shaalan(2009)]{farghaly2009arabic}
 Ali Farghaly and Khaled Shaalan.
 \newblock 2009.
 \newblock Arabic Natural Language Processing: Challenges and Solutions.
 \newblock In \emph{Proceedings of the 2009 Workshop on Arabic Natural Language Processing}.
+
+\bibitem[Gatto et~al.(2023)]{gatto2023cot}
+J.~Gatto, O.~Sharif, and S.~M.~Preum.
+\newblock 2023.
+\newblock Chain-of-Thought Embeddings for Stance Detection on Social Media.
+\newblock In \emph{Findings of the Association for Computational Linguistics: EMNLP}, pages 4154--4161.
+
+\bibitem[Huang et~al.(2017)]{huang2017snapshot}
+G.~Huang, Y.~Li, G.~Pleiss, Z.~Liu, J.~Hopcroft, and K.~Weinberger.
+\newblock 2017.
+\newblock Snapshot Ensembles: Train 1, Get M for Free.
+\newblock In \emph{Proceedings of ICLR}.
+
+\bibitem[Liang et~al.(2021)]{liang2021rdrop}
+X.~Liang, L.~Zhang, and H.~Yu.
+\newblock 2021.
+\newblock R-Drop: Regularized Dropout for Neural Networks.
+\newblock In \emph{NeurIPS}.
+
+\bibitem[Ma et~al.(2026)]{arapola2026github}
+Guanghui Ma, Nuh Al Sharafi, Ali Khaled A. Ishtay Altamimi, and Hussein MH Nasser.
+\newblock 2026.
+\newblock AraPola: Arabic Polarization Detection System.
+\newblock \url{https://github.com/DeepClean415/AraPola}.
 
 \bibitem[Obeid et~al.(2020)]{obeid2020cameltools}
 O.~Obeid, K.~Eryani, N.~Zalmout, S.~Khalifa, D.~Taji, B.~Alhafni, B.~AlKhamissi, and N.~Habash.
@@ -469,6 +507,12 @@ O.~Obeid, K.~Eryani, N.~Zalmout, S.~Khalifa, D.~Taji, B.~Alhafni, B.~AlKhamissi,
 POLAR @ SemEval.
 \newblock 2025.
 \newblock Task Description: Detecting Multilingual, Multicultural, and Multievent Online Polarization.
+
+\bibitem[Qarah and Alsanoosy(2024)]{qarah2024tokenizers}
+F.~Qarah and T.~Alsanoosy.
+\newblock 2024.
+\newblock A Comprehensive Analysis of Various Tokenizers for Arabic Large Language Models.
+\newblock \emph{Applied Sciences}, 14(13):5696.
 
 \bibitem[Ridnik et~al.(2021)]{ridnik2021asl}
 Tal Ridnik, Emanuel Ben-Baruch, Nadav Zamir, Asaf Noy, Itamar Friedman, Matan Protter, and Lior Wolf.
@@ -482,17 +526,22 @@ P.~N.~Vasist, D.~Chatterjee, and S.~Krishnan.
 \newblock The Polarizing Impact of Political Disinformation and Hate Speech: A Cross-country Configural Narrative.
 \newblock \emph{Information Systems Frontiers}, pages 1--26.
 
-\bibitem[Al-Shammari(2007)]{Shammari2007}
-E.~Al-Shammari.
-\newblock 2007.
-\newblock Arabic Text Preprocessing for Natural Language Processing Applications.
-\newblock Princess Sumaya University for Technology.
+\bibitem[Wolf et~al.(2020)]{wolf2020transformers}
+T.~Wolf, L.~Debut, V.~Sanh, and J.~Chaumond.
+\newblock 2020.
+\newblock Transformers: State-of-the-Art Natural Language Processing.
+\newblock In \emph{EMNLP System Demonstrations}, pages 38--45.
 
-\bibitem[Ma et~al.(2026)]{arapola2026github}
-Guanghui Ma, Nuh Al Sharafi, Ali Khaled A. Ishtay Altamimi, and Hussein MH Nasser.
-\newblock 2026.
-\newblock AraPola: Arabic Polarization Detection System.
-\newblock \url{https://github.com/DeepClean415/AraPola}.
+\bibitem[Yasuda et~al.(2024)]{yasuda2024weighted}
+Y.~Yasuda, T.~Miyazaki, and J.~Goto.
+\newblock 2024.
+\newblock Weighted Asymmetric Loss for Multi-Label Text Classification on Imbalanced Data.
+
+\bibitem[Zhang et~al.(2025)]{zhang2025mprf}
+Z.~Zhang, J.~Zhang, H.~Xu, J.~Guo, and X.~Cheng.
+\newblock 2025.
+\newblock MPRF: Interpretable Stance Detection Through Multi-Path Reasoning Framework.
+\newblock In \emph{Proceedings of EMNLP 2025}, pages 454--470, Suzhou, China.
 
 \end{thebibliography}
 
@@ -546,6 +595,13 @@ Guanghui Ma, Nuh Al Sharafi, Ali Khaled A. Ishtay Altamimi, and Hussein MH Nasse
 \end{figure}
 
 % Morphological Feature Analysis Figures
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{./pics/correlation_morphological_toxicity.png}
+\caption{Correlation heatmap between morphological features and toxicity/polarization labels. The analysis reveals statistically significant correlations between certain linguistic features (verb counts, clitic patterns, POS distributions) and polarized content.}
+\label{fig:morph_correlation}
+\end{figure}
 
 \begin{figure}[!htbp]
 \centering
