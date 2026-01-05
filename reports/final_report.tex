@@ -335,8 +335,47 @@ Meta-ensemble (ASL + snapshots + LR + thr.) & 0.6788 & 0.7092 & 0.7059 \\
 
 \subsection{Subtask 3}
 
-We provide an initial AraGPT2 prompt-based baseline for Subtask~3. Quantitative scores depend on the evaluation subset
-and decoding setup; we focus on describing the approach and limitations.
+We provide an initial AraGPT2 prompt-based baseline for Subtask~3. The general format mirrors Subtask~2 but with manifestation labels instead of polarization types.
+
+Below is an example prompt for the \textit{stereotype} label:
+\begin{quote}
+  النص: "كل اللاجئين كسالى ولا يعملون"
+السؤال: هل يحتوي على القوالب النمطية؟
+الإجابة: نعم، يحتوي على القوالب النمطية
+
+النص: "الطقس جميل اليوم والناس سعداء"
+السؤال: هل يحتوي على القوالب النمطية؟
+الإجابة: لا، لا يحتوي على القوالب النمطية
+
+ملاحظة: يجب أن يحتوي على تعميم واضح عن مجموعة من الناس.
+
+النص: "هؤلاء القوم دائماً يسببون المشاكل"
+السؤال: هل يحتوي على القوالب النمطية؟
+الإجابة:
+\end{quote}
+
+In english this translates to:
+\begin{quote}
+  Text: "All refugees are lazy and do not work"
+Question: Does it contain stereotypes?
+Answer: Yes, it contains stereotypes
+
+Text: "The weather is nice today and people are happy"
+Question: Does it contain stereotypes?
+Answer: No, it does not contain stereotypes
+
+Note: It should contain a clear generalization about a group of people.
+
+Text: "These people always cause trouble"
+Question: Does it contain stereotypes?
+Answer:
+\end{quote}
+
+As with subtask 2, this prompt is repeated for each of the six manifestation labels with appropriate label-specific hints.
+
+Results from this initial prompt-based Subtask~3 system are modest, with macro F1 scores around .54 on the train set validation split.
+
+
 
 \textbf{TODO (final edit):} Add your best Subtask~3 metrics and a per-label table analogous to Table~\ref{tab:subtask2_perlabel}.
 
