@@ -76,11 +76,11 @@ where excessive normalization may remove stylistic cues that correlate with pola
 
 Polarization refers to the divergence of attitudes away from the center toward more extreme group-aligned positions. In online settings, anonymity, rapid information diffusion, and algorithmic amplification can increase hostile inter-group discourse and intensify the spread of harmful narratives. Detecting polarization in multilingual and multi-cultural social media contexts is therefore important for content moderation. Being able to detect polarization across different languages and cultures, is challenging as it manifests differently,  making this an important area of research.
 
-This report describes our work in POLAR @ SemEval-2026 (Task~9): Detecting Multilingual, Multicultural, and Multievent Online Polarization \cite{polar-semeval-2026}. We focus exclusively on the Arabic (ARB) dataset and address all three subtasks with varying degrees of depth. Subtask 1 involves binary classification to determine whether a social media post exhibits polarized language. For this subtask, we developed an extensive ensemble approach based on fine-tuning MARBERTv2 with stratified K-fold cross-validation and soft voting, achieving strong performance with a macro F1-score of 0.834. We also explored hybrid models combining transformer-based representations with traditional machine learning on morphological features extracted via CAMeL Tools, though these did not yield substantial improvements over the pure transformer ensemble.
+This report describes our work in POLAR @ SemEval-2026 (Task~9): Detecting Multilingual, Multicultural, and Multievent Online Polarization \cite{polar-semeval-2026}. We focus exclusively on the Arabic (ARB) dataset and address all three subtasks with varying degrees of depth. Subtask 1 involves binary classification to determine whether a social media post exhibits polarized language. For this subtask, we developed an extensive ensemble approach based on fine-tuning MARBERTv2 with stratified K-fold cross-validation and soft voting, achieving strong performance with a macro F1-score of 0.8264 on the competition's validation set. We also explored hybrid models combining transformer-based representations with traditional machine learning on morphological features extracted via CAMeL Tools, though these did not yield substantial improvements over the pure transformer ensemble.
 
-For Subtask 2, which requires multi-label classification of polarization types (political, racial/ethnic, religious, gender/sexual, and other), we initially explored prompt-based approaches using AraGPT2 before developing a sophisticated system combining Asymmetric Loss to handle class imbalance, snapshot ensembling with cosine restarts, a stacked meta-learner, and per-label threshold tuning. This approach achieved a macro F1-score of 0.6788 on our validation set, demonstrating effective handling of the multi-label nature and class imbalance inherent in this subtask.
+For Subtask 2, which requires multi-label classification of polarization types (political, racial/ethnic, religious, gender/sexual, and other), we initially explored prompt-based approaches using AraGPT2 before developing a sophisticated system using MARBERTv2 combining Asymmetric Loss to handle class imbalance, snapshot ensembling with cosine restarts, a stacked meta-learner, and per-label threshold tuning. This approach achieved a macro F1-score of 0.6082 on the competition's validation set, demonstrating effective handling of the multi-label nature and class imbalance inherent in this subtask.
 
-Subtask 3, which involves predicting manifestations of polarization (stereotype, vilification, dehumanization, extreme language, lack of empathy, and invalidation), received less extensive treatment due to time constraints. We provide an initial prompt-based baseline using AraGPT2, achieving modest results with a macro F1-score around 0.56. The weaker performance on this subtask highlights the complexity of identifying fine-grained linguistic manifestations of polarization and suggests directions for future work.
+Subtask 3, which involves predicting manifestations of polarization (stereotype, vilification, dehumanization, extreme language, lack of empathy, and invalidation), received less extensive treatment due to time constraints. We provide an initial prompt-based baseline using AraGPT2, achieving lackluster results with a macro F1-score of 0.2962. The weaker performance on this subtask highlights the complexity of identifying fine-grained linguistic manifestations of polarization and suggests directions for future work.
 
 Beyond reporting final metrics, this report documents our process including the things we tried to no avail. We provide detailed descriptions of our methods and ablation studies to facilitate reproducibility and inform future research on Arabic polarization detection.
 
@@ -102,21 +102,21 @@ Finally, for multi-label learning under class imbalance and negative-label noise
 POLAR defines three subtasks for multilingual polarization detection. Subtask 1 is binary classification: determine whether a text is polarized or non-polarized. Subtask 2 is multi-label classification over polarization types and targets, including political, racial/ethnic, religious, gender/sexual, and other categories. Subtask 3 is multi-label classification over polarization manifestations: stereotype, vilification, dehumanization, extreme language, lack of empathy, and invalidation. The official shared-task metric for all subtasks is macro F1 \cite{polar-semeval-2026}.
 
 We use only the official Arabic (ARB) data released by the organizers.
-For Subtask~1, the labeled training set contains \textbf{3,380} instances with columns \texttt{id}, \texttt{text}, and \texttt{polarization}.
-From our training splits, the class distribution is moderately imbalanced with \textbf{1,868} non-polarized vs.\ \textbf{1,512} polarized instances.
+For Subtask~1, the labeled training set contains 3,380 instances with columns \texttt{id}, \texttt{text}, and \texttt{polarization}.
+From our training splits, the class distribution is moderately imbalanced with 1,868 non-polarized vs.\ 1,512 polarized instances (see Appendix Figure~\ref{fig:label_dist_bar}).
 
-For Subtask~2, the labeled training set has the same instance count (\textbf{3,380}) with five binary label columns
+For Subtask~2, the labeled training set has the same instances with five binary label columns
 (\texttt{political}, \texttt{racial/ethnic}, \texttt{religious}, \texttt{gender/sexual}, \texttt{other}).
-The provided development file used for submission is unlabeled and contains \textbf{169} instances in our pipeline.
+The provided development file used for submission is unlabeled and contains 169 instances in our pipeline.
 Subtask~3 follows the same format with six binary label columns (manifestations).
 
 \subsection{Exploratory Data Analysis}
 
 We performed exploratory analysis to understand the properties of Arabic social-media text and its interaction with labels.
 Consistent with user-generated content, texts are typically short with a long-tail of longer entries (Appendix Figure~\ref{fig:text_length_dist}).
-We also observed frequent code-switching (Latin characters and mixed digits) and common social-media artifacts such as URLs, mentions, and hashtags
-(Appendix Figures~\ref{fig:latin_presence} and~\ref{fig:mention_presence}).
-These observations motivated (i) a robust normalization strategy for noisy text and (ii) model choices that are known to work well for dialectal Arabic.
+We also observed minimal code-switching (Latin characters and mixed digits) and no common social-media artifacts such as URLs, mentions, and hashtags
+(Appendix Figures~\ref{fig:latin_presence} and~\ref{fig:mention_presence}) which indicate a relatively clean dataset.
+These observations motivated model choices that are known to work well for dialectal Arabic.
 
 \subsection{Preprocessing and Feature Engineering}
 
