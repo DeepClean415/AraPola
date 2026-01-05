@@ -73,14 +73,20 @@ Beyond reporting final metrics, this report documents our process including the 
 
 \section{Related Work}
 
-Polarization detection overlaps with stance detection, toxicity modeling, and hate-speech research, but is distinct in targeting
-language that intensifies inter-group division and hostility \cite{vasist2023polarizing}.
-In Arabic NLP, dialectal variation, orthographic ambiguity, and code-switching complicate modeling \cite{farghaly2009arabic}.
-Transformer models pretrained on Arabic social media have become the dominant approach; MARBERT and its variants are particularly effective
-because they are trained on large amounts of dialectal user-generated content \cite{abdulmageed2021arbert,alshenafi2024rasid}.
-For prompt-based baselines, AraGPT2 is an Arabic GPT-style language model that can be adapted for generative classification \cite{antoun2021aragpt2,alhariri2024smash}.
-On the preprocessing side, CAMeL Tools provides robust morphological analysis and segmentation utilities for Arabic \cite{obeid2020cameltools}.
-Finally, for multi-label learning under class imbalance and negative-label noise, Asymmetric Loss (ASL) down-weights easy negatives and can improve macro-F1 \cite{ridnik2021asl}.
+Polarization detection is related to stance detection, toxicity modeling, and hate-speech research, but it targets a specific communicative function: language that increases inter-group division through antagonistic framing, derogation, and escalation. Because polarization is often expressed implicitly and through culturally situated cues, effective systems typically need both robust modeling of informal social-media Arabic and careful handling of label imbalance in multi-label settings.
+
+Prior work on polarization and harmful discourse provides motivation for building culturally aware detectors. Vasist et al.~\cite{vasist2023polarizing} study how political disinformation and hate speech interact with polarized online environments across countries, emphasizing that polarization frequently manifests through hostile inter-group narratives rather than only explicit slurs. Their findings support the need for detection methods that generalize across contexts while remaining sensitive to language- and culture-specific realizations of conflict.
+
+Arabic NLP introduces additional difficulties that are especially salient for social-media polarization. Farghaly and Shaalan~\cite{farghaly2009arabic} survey challenges such as dialectal variation, orthographic ambiguity, rich morphology, and inconsistent spelling in user-generated text. These properties increase sparsity for traditional feature-based methods and make pretraining on large-scale informal Arabic particularly valuable.
+
+Transformer models pretrained on Arabic, and especially on dialectal social media, have become the dominant approach for downstream classification tasks. Abdul-Mageed et al.~\cite{abdulmageed2021arbert} introduced ARBERT and MARBERT, showing strong performance across multiple Arabic benchmarks, with MARBERT’s Twitter-focused pretraining making it particularly suitable for noisy dialectal input. In stance detection—an adjacent problem that shares pragmatic and topical signals with polarization—systems based on MARBERT remain highly competitive; for example, AlShenaifi et al.~\cite{alshenafi2024rasid} report strong StanceEval results using MARBERT fine-tuning, reinforcing our choice of a MARBERT-family encoder for Arabic polarization.
+
+Prompting Arabic generative language models has also been explored as an alternative to supervised fine-tuning. Antoun et al.~\cite{antoun2021aragpt2} presented AraGPT2, enabling Arabic text generation and providing a foundation for instruction- and prompt-based strategies. In the StanceEval shared task, Al~Hariri and Abu~Farha~\cite{alhariri2024smash} show that prompt engineering with LLMs can be effective but is sensitive to prompt formulation and inference choices. We therefore treat prompting as a lightweight baseline and rely primarily on discriminative fine-tuning for our best systems.
+
+Finally, our multi-label subtasks face substantial label imbalance, where negative labels dominate and standard binary cross-entropy can overemphasize easy negatives. Ridnik et al.~\cite{ridnik2021asl} proposed Asymmetric Loss to down-weight confident negatives, improving learning in imbalanced multi-label settings. For Arabic-specific linguistic analysis and preprocessing experiments, we rely on CAMeL Tools~\cite{obeid2020cameltools}, which provides morphological analysis and related utilities; although heavy morphological processing can sometimes harm performance on informal text, these tools are useful for controlled ablations and interpretability-oriented feature extraction.
+Jan 5, 2026
+rescue version
+
 
 \section{Methodology}
 
