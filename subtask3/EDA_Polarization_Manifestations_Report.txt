@@ -1,0 +1,87 @@
+
+Dataset: arb copy.csv
+Total Samples: 3,380
+
+CLASS DISTRIBUTION:
+──────────────────────────────────────────────────────────────────────
+
+STEREOTYPE:
+  Positive: 1,127 (33.34%)
+  Negative: 2,253 (66.66%)
+  Imbalance: 1:2.00
+
+VILIFICATION:
+  Positive: 1,256 (37.16%)
+  Negative: 2,124 (62.84%)
+  Imbalance: 1:1.69
+
+DEHUMANIZATION:
+  Positive: 370 (10.95%)
+  Negative: 3,010 (89.05%)
+  Imbalance: 1:8.14
+
+EXTREME LANGUAGE:
+  Positive: 1,027 (30.38%)
+  Negative: 2,353 (69.62%)
+  Imbalance: 1:2.29
+
+LACK OF EMPATHY:
+  Positive: 575 (17.01%)
+  Negative: 2,805 (82.99%)
+  Imbalance: 1:4.88
+
+INVALIDATION:
+  Positive: 274 (8.11%)
+  Negative: 3,106 (91.89%)
+  Imbalance: 1:11.34
+
+LINGUISTIC SIGNATURES (Positive Samples):
+──────────────────────────────────────────────────────────────────────
+
+STEREOTYPE:
+  Avg Character Length: 102.1 ± 39.7
+  Avg Word Count: 18.0 ± 7.0
+  Latin Char Ratio: 0.11%
+  Multilingual Presence: 4.6%
+
+VILIFICATION:
+  Avg Character Length: 98.1 ± 38.5
+  Avg Word Count: 17.5 ± 6.9
+  Latin Char Ratio: 0.10%
+  Multilingual Presence: 4.5%
+
+DEHUMANIZATION:
+  Avg Character Length: 97.0 ± 35.7
+  Avg Word Count: 17.2 ± 6.3
+  Latin Char Ratio: 0.04%
+  Multilingual Presence: 4.1%
+
+EXTREME LANGUAGE:
+  Avg Character Length: 99.8 ± 38.9
+  Avg Word Count: 17.6 ± 6.8
+  Latin Char Ratio: 0.07%
+  Multilingual Presence: 3.9%
+
+LACK OF EMPATHY:
+  Avg Character Length: 103.1 ± 38.1
+  Avg Word Count: 18.2 ± 6.9
+  Latin Char Ratio: 0.07%
+  Multilingual Presence: 3.3%
+
+INVALIDATION:
+  Avg Character Length: 99.7 ± 34.9
+  Avg Word Count: 17.5 ± 6.1
+  Latin Char Ratio: 0.00%
+  Multilingual Presence: 2.6%
+
+TOP 5 DISCRIMINATIVE WORDS:
+──────────────────────────────────────────────────────────────────────
+
+STEREOTYPE: من, في, على, الله, ما
+VILIFICATION: من, في, على, الله, يا
+DEHUMANIZATION: من, في, على, يا, الله
+EXTREME LANGUAGE: من, في, على, الله, يا
+LACK OF EMPATHY: من, في, على, يا, الله
+INVALIDATION: من, الله, في, على, يا
+
+======================================================================
