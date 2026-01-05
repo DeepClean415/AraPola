@@ -563,3 +563,53 @@ for i, label in enumerate(labels):
 
 results_df.to_csv('/kaggle/working/predictions.csv', index=False)
 print("✓ Predictions saved to /kaggle/working/predictions.csv")
+
+# ============================================================================
+# DEV SET PREDICTION - CSV FORMAT OUTPUT
+# ============================================================================
+
+print("\n" + "="*70)
+print("RUNNING MODEL ON DEV SET")
+print("="*70)
+
+# Load dev set (update path as needed)
+dev_df = pd.read_csv('/kaggle/input/arbsubtask3/dev.csv')  # ← Update this path
+print(f"✓ Loaded dev set: {len(dev_df)} samples")
+
+# Run predictions on dev set
+print("\nGenerating predictions for dev set...")
+dev_results = results['classifier'].batch_classify(
+    texts=dev_df['text'].tolist(),
+    num_few_shot=3,
+    show_progress=True
+)
+
+# Prepare output in required CSV format
+output_data = []
+for idx, (_, row) in enumerate(dev_df.iterrows()):
+    prediction = dev_results[idx]['predictions']
+    output_row = {
+        'id': row['id'],  # Assuming 'id' column exists in dev set
+        'stereotype': prediction['stereotype'],
+        'vilification': prediction['vilification'],
+        'dehumanization': prediction['dehumanization'],
+        'extreme_language': prediction['extreme_language'],
+        'lack_of_empathy': prediction['lack_of_empathy'],
+        'invalidation': prediction['invalidation']
+    }
+    output_data.append(output_row)
+
+# Create output DataFrame
+output_df = pd.DataFrame(output_data)
+
+# Save to CSV
+output_df.to_csv('/kaggle/working/dev_predictions.csv', index=False)
+print(f"\n✓ Dev set predictions saved to /kaggle/working/dev_predictions.csv")
+print(f"✓ Format: id, stereotype, vilification, dehumanization, extreme_language, lack_of_empathy, invalidation")
+print(f"✓ Total predictions: {len(output_df)}")
+
+# Display first few rows
+print("\nFirst 3 predictions:")
+print(output_df.head(3).to_string(index=False))
+
+print("="*70)
