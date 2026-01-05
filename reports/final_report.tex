@@ -150,17 +150,43 @@ We used these features for analysis and as part of early baselines; however, tra
 
 Our best Subtask~1 approach fine-tunes MARBERTv2 (\texttt{UBC-NLP/MARBERTv2}) for binary sequence classification.
 To reduce variance and improve robustness under moderate class imbalance, we train a stratified K-fold ensemble and average predicted probabilities
-(\textit{soft voting}). We used K=8 in our final setup (code: \texttt{Training\_8Fold\_Ensemble.ipynb}).
+(\textit{soft voting}). We used K=8 in our final setup.
 
 \paragraph{Training configuration.}
 We tokenize with maximum length 128, train for 4 epochs with learning rate $2\times10^{-5}$, batch size 16,
 warmup steps 500, and weight decay 0.01. We use mixed precision when available.
 
+\paragraph{Morphological feature exploration.}
+We also explored a hybrid approach combining transformer-based models with traditional machine learning classifiers using morphological features.
+Using CAMeL Tools~\cite{obeid2020cameltools}, we extracted 20 morphological features from each text, including:
+\begin{itemize}
+\item Part-of-speech (POS) ratios: noun, verb, adjective, adverb, particle, and pronoun frequencies.
+\item Clitic patterns: proclitic (e.g., definite article \textit{al-}, conjunctions, prepositions) and enclitic (e.g., possessive/pronominal suffixes) ratios.
+\item Morphological complexity: average morphemes per word, unique lemma ratio, and clitic-to-word ratio.
+\item Structural indicators: sentence length, word count, and punctuation density.
+\end{itemize}
+
+We trained gradient boosting models (XGBoost, LightGBM) on these morphological features and experimented with four hybrid ensemble strategies:
+(i)~\textbf{weighted averaging} of transformer and ML probabilities with various weight combinations;
+(ii)~\textbf{stacking with a meta-learner} (logistic regression) over both models' predictions and confidence scores;
+(iii)~\textbf{confidence-based selection}, choosing the prediction from the model with higher confidence; and
+(iv)~\textbf{adaptive weighted ensembling}, dynamically weighting models proportionally to their per-sample confidence.
+
+Our analysis revealed that certain morphological features correlate with polarized content---in particular, higher verb ratios
+and certain clitic patterns showed statistically significant differences between polarized and non-polarized texts
+(see Figure~\ref{fig:morph_feature_importance} for feature importances and Figure~\ref{fig:morph_roc_comparison} for ROC comparison).
+However, in our experiments, the hybrid ensemble did not consistently outperform the pure MARBERTv2 K-fold ensemble
+(Figure~\ref{fig:morph_ensemble_cm} shows confusion matrices for all ensemble strategies).
+We attribute this to MARBERTv2's strong performance on dialectal Arabic already capturing much of the relevant linguistic signal,
+and the relatively small gains from morphological features not justifying the added complexity.
+Nonetheless, the morphological analysis provided valuable interpretability insights and identified challenging cases where both models fail
+(Figure~\ref{fig:morph_prediction_analysis}), which could inform future data collection and model improvement efforts.
+
 \subsection{Subtask 2: Multi-label Polarization Type}
 
 \paragraph{Prompt-based baseline.}
 We first attempted a prompt-based multi-label classifier using AraGPT2-medium \cite{antoun2021aragpt2}.
-We posed a yes/no decision per label using Arabic instructions and few-shot examples (code: \texttt{subtask2\_acegpt\_single\_cell.py}).
+We posed a yes/no decision per label using Arabic instructions and few-shot examples.
 This baseline is sensitive to prompt format, decoding parameters, and the model’s tendency to generate verbose outputs.
 
 \paragraph{Best system: MARBERTv2 + ASL + snapshot ensemble + stacking + thresholds.}
@@ -191,7 +217,7 @@ We use max length 256, epochs 4, learning rate $2\times10^{-5}$, batch size 16, 
 \subsection{Subtask 3: Multi-label Manifestations}
 
 For Subtask~3, we implemented an initial prompt-based baseline using the same AraGPT2-medium framework as Subtask~2, but with manifestation labels
-and label-specific hints (code: \texttt{subtask3\_acegpt\_single\_cell.py}).
+and label-specific hints.
 Due to time constraints, Subtask~3 was not optimized to the same extent as Subtasks~1--2.
 
 \textbf{TODO (final edit):} If you have improved Subtask~3 results (e.g., MARBERTv2 multi-label with ASL), add them here and mirror Subtask~2 reporting.
@@ -282,6 +308,15 @@ and decoding setup; we focus on describing the approach and limitations.
 Restricting to ARB ensures consistent linguistic phenomena (dialects, orthography) and reduces domain mismatch.
 However, label sparsity and multi-label imbalance in Subtasks~2--3 make macro-F1 optimization challenging.
 
+\paragraph{Morphological features and hybrid ensembles.}
+Our morphological feature exploration revealed interpretable patterns: polarized texts tend to exhibit higher verb ratios, more emphatic constructions,
+and distinctive clitic usage compared to non-polarized texts. Statistical analysis (t-tests) confirmed significant differences in several morphological dimensions.
+When combined with MARBERTv2 via weighted averaging or stacking, the hybrid ensemble occasionally improved on individual difficult cases where both models
+initially failed. However, the overall macro-F1 improvement was marginal (typically $<$1\%), suggesting that MARBERTv2's contextual embeddings already
+implicitly capture most morphological signals. The morphological analysis nonetheless proved valuable for error analysis---we identified consistently
+misclassified samples and characterized their linguistic properties (e.g., shorter text length, specific POS distributions), which could guide future
+data augmentation or targeted model improvements.
+
 \paragraph{Preprocessing trade-offs.}
 We found that heavy morphological processing can reduce performance by removing surface-level intensity cues (elongations, creative spelling),
 and by producing token sequences that may be less aligned with MARBERT’s pretraining distribution.
@@ -314,7 +349,7 @@ For Subtask~2, we showed that combining ASL, snapshot ensembling, stacking with 
 
 \begin{itemize}
 \item \textbf{Guanghui Ma:} preprocessing pipelines; feature engineering; Subtask~1 training and ensembling; report drafting.
-\item \textbf{Nuh Al Sharafi:} model experiments and tuning; Subtask~2 development and stacking; evaluation.
+\item \textbf{Nuh Al Sharafi:} morphological feature analysis; hybrid ensemble exploration; model experiments and tuning; Subtask~2 development and stacking; evaluation.
 \item \textbf{Ali Khaled A. Ishtay Altamimi:} EDA; visualization; error analysis; report figures.
 \item \textbf{Hussein MH Nasser:} baselines (AraGPT2 prompting); additional experimentation; documentation and reproducibility.
 \end{itemize}
@@ -437,6 +472,36 @@ E.~Al-Shammari.
 \includegraphics[width=0.95\textwidth]{./pics/og vs basic vs advanced preprocess.png}
 \caption{Original vs.\ basic vs.\ advanced preprocessing outputs (advanced includes clitic segmentation).}
 \label{fig:preprocessing_comparison}
+\end{figure}
+
+% Morphological Feature Analysis Figures
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.85\textwidth]{./pics/XGBoost_top_features.jpg}
+\caption{Top 15 morphological feature importances from XGBoost classifier. Verb count (\texttt{num\_verbs}) is the most predictive feature, followed by conjunctions and imperative forms.}
+\label{fig:morph_feature_importance}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{./pics/model_ROC_comparison.jpg}
+\caption{ROC curves comparing MARBERTv2, XGBoost (morphological features), and hybrid ensemble strategies. MARBERTv2 achieves AUC~0.8886, while the confidence-based hybrid slightly improves to AUC~0.8888.}
+\label{fig:morph_roc_comparison}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{./pics/Confusion_Matrices_Ensemble_Models.jpg}
+\caption{Confusion matrices for four hybrid ensemble strategies: weighted averaging (0.4/0.6), stacking meta-learner, confidence-based selection, and adaptive weighted. The weighted approach achieves the highest F1 (0.8213).}
+\label{fig:morph_ensemble_cm}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{./pics/model_prediction_comparison.jpg}
+\caption{Left: Prediction analysis showing model agreement---57.4\% of samples are correctly classified by both MARBERTv2 and XGBoost. Right: Accuracy comparison showing the best ensemble (0.8314) slightly outperforms individual models.}
+\label{fig:morph_prediction_analysis}
 \end{figure}
 
 % CS445-required outputs: confusion matrix + PR curves.
