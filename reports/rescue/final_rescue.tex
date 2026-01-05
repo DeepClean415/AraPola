@@ -347,7 +347,43 @@ Meta-ensemble (ASL + snapshots + LR + thr.) & 0.6788 & 0.7092 & 0.7059 \\
 
 \subsection{Subtask 3}
 
-Results from the initial prompt-based Subtask~3 system are modest, with macro F1 scores around .54 on the train set validation split. Due to time constraints, we did not develop more sophisticated models for this subtask.
+Table~\ref{tab:subtask3_perlabel} reports per-manifestation precision/recall/F1 for our initial prompt-based system, and Table~\ref{tab:subtask3_overall} shows overall metrics. The system achieved modest performance with macro F1 0.5595 on the train set validation split. Due to time constraints, we did not develop more sophisticated models for this subtask.
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Manifestation} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} & \textbf{Support} \\
+\midrule
+Stereotype         & 0.905 & 0.731 & 0.809 & 26 \\
+Vilification       & 0.833 & 0.417 & 0.556 & 24 \\
+Dehumanization     & 0.389 & 0.778 & 0.519 & 9 \\
+Extreme Language   & 0.652 & 0.714 & 0.682 & 21 \\
+Lack of Empathy    & 0.381 & 0.667 & 0.485 & 12 \\
+Invalidation       & 0.182 & 1.000 & 0.308 & 4 \\
+\bottomrule
+\end{tabular}
+\caption{Subtask~3 per-manifestation validation metrics from AraGPT2 prompt-based baseline.}
+\label{tab:subtask3_perlabel}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Hamming Loss    & 0.4833 \\
+F1 Micro        & 0.5915 \\
+F1 Macro        & 0.5595 \\
+F1 Samples      & 0.5261 \\
+\bottomrule
+\end{tabular}
+\caption{Subtask~3 overall validation metrics.}
+\label{tab:subtask3_overall}
+\end{table}
 
 \section{Discussion}
 
