@@ -186,8 +186,46 @@ Nonetheless, the morphological analysis provided valuable interpretability insig
 
 \paragraph{Prompt-based baseline.}
 We first attempted a prompt-based multi-label classifier using AraGPT2-medium \cite{antoun2021aragpt2}.
-We posed a yes/no decision per label using Arabic instructions and few-shot examples.
-This baseline is sensitive to prompt format, decoding parameters, and the model’s tendency to generate verbose outputs.
+AraGPT2 was chosen for its generative capabilities and prior success in Arabic NLP tasks, as well as its manageable size for experimentation in comparison to larger arabic models such as acegpt and aragpt3.
+We posed a yes/no decision per label using Arabic instructions and few-shot examples, the model would generate answers for each label, and we would parse the outputs to obtain binary predictions of presence/absence of the label.
+
+The prompt format was as follows:
+\begin{quote}
+  النص: "الحكومة فاسدة والشعب مظلوم"
+السؤال: هل يحتوي على الاستقطاب السياسي؟
+الإجابة: نعم، يحتوي على الاستقطاب السياسي
+
+النص: "الطقس جميل اليوم"
+السؤال: هل يحتوي على الاستقطاب السياسي؟
+الإجابة: لا، لا يحتوي على الاستقطاب السياسي
+
+ملاحظة: يجب أن يتعلق بالسياسة أو الحكومة أو الأحزاب السياسية.
+
+النص: "رئيس الدولة كافر والشعب ساكت"
+السؤال: هل يحتوي على الاستقطاب السياسي؟
+الإجابة:
+\end{quote}
+In english this translates to:
+\begin{quote}
+  Text: "The government is corrupt and the people are oppressed"
+Question: Does it contain political polarization?
+Answer: Yes, it contains political polarization
+
+Text: "The weather is nice today"
+Question: Does it contain political polarization?
+Answer: No, it does not contain political polarization
+
+Note: It should relate to politics, government, or political parties.
+
+Text: "The head of state is an infidel and the people are silent"
+Question: Does it contain political polarization?
+Answer:
+\end{quote}
+
+As AraGPT2 is not fine-tuned for classification, this approach served as a baseline, by giving the model two examples per label (one positive, one negative), pulled directly from the dataset, and a hint about the label's scope in the form of a 'note' which differs for each label and helps the model understand the context of the label.
+
+This approach yielded modest results, with macro F1 scores hovering around .4 to .43 on the test set, these are the results achieved after experimentation with parsing strategies, prompt variations and temperature settings.
+
 
 \paragraph{Best system: MARBERTv2 + ASL + snapshot ensemble + stacking + thresholds.}
 Our strongest Subtask~2 system adapts MARBERTv2 to multi-label classification and combines four components:
