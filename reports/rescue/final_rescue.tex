@@ -133,10 +133,9 @@ We keep expressive signals (e.g., emojis, repeated characters) when possible bec
 \paragraph{Advanced preprocessing (tested, then discarded for final models).}
 We implemented an advanced pipeline using CAMeL Tools \cite{obeid2020cameltools} with morphological analysis and clitic segmentation.
 Our \texttt{ArabicAdvancedPreprocessor} can split enclitics (default: pronominal clitics), optionally split proclitics, and optionally apply lemmatization
-(\texttt{ArbPreAdv.py}).
-While linguistically appealing, we found that \textbf{over-processing can remove or distort surface cues}
-(e.g., dialect spelling, emphatic elongation) that are predictive for polarized content.
-We therefore proceeded with basic preprocessing for the final system (see Appendix Figure~\ref{fig:preprocessing_comparison}).
+(\texttt{ArbPreAdv.py}). All preprocessing code and implementations are available in our GitHub repository~\cite{arapola2026github}.
+While linguistically appealing, we found that over-processing didn't help the results and hurt them in some cases.
+We therefore proceeded with basic preprocessing for the further testing and eventually the final system (see Appendix Figure~\ref{fig:preprocessing_comparison}).
 
 \subsubsection{Feature Engineering}
 
@@ -499,6 +498,12 @@ E.~Al-Shammari.
 \newblock 2007.
 \newblock Arabic Text Preprocessing for Natural Language Processing Applications.
 \newblock Princess Sumaya University for Technology.
+
+\bibitem[Ma et~al.(2026)]{arapola2026github}
+Guanghui Ma, Nuh Al Sharafi, Ali Khaled A. Ishtay Altamimi, and Hussein MH Nasser.
+\newblock 2026.
+\newblock AraPola: Arabic Polarization Detection System.
+\newblock \url{https://github.com/DeepClean415/AraPola}.
 
 \end{thebibliography}
 
