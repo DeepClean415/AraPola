@@ -151,26 +151,18 @@ We also explored a hybrid approach combining transformer-based models with tradi
 Using CAMeL Tools~\cite{obeid2020cameltools}, we extracted 20 morphological features from each text, including:
 \begin{itemize}
 \item Part-of-speech (POS) ratios: noun, verb, adjective, adverb, particle, and pronoun frequencies.
-\item Clitic patterns: proclitic (e.g., definite article \textit{al-}, conjunctions, prepositions) and enclitic (e.g., possessive/pronominal suffixes) ratios.
 \item Morphological complexity: average morphemes per word, unique lemma ratio, and clitic-to-word ratio.
-\item Structural indicators: sentence length, word count, and punctuation density.
 \end{itemize}
 
 We trained gradient boosting models (XGBoost, LightGBM) on these morphological features and experimented with four hybrid ensemble strategies:
-(i)~\textbf{weighted averaging} of transformer and ML probabilities with various weight combinations;
-(ii)~\textbf{stacking with a meta-learner} (logistic regression) over both models' predictions and confidence scores;
-(iii)~\textbf{confidence-based selection}, choosing the prediction from the model with higher confidence; and
-(iv)~\textbf{adaptive weighted ensembling}, dynamically weighting models proportionally to their per-sample confidence.
+(i)~weighted averaging of transformer and ML probabilities with various weight combinations;
+(ii)~stacking with a meta-learner (logistic regression) over both models' predictions and confidence scores;
+(iii)~confidence-based selection, choosing the prediction from the model with higher confidence; and
+(iv)~adaptive weighted ensembling, dynamically weighting models proportionally to their per-sample confidence.
 
 Our analysis revealed that certain morphological features correlate with polarized content---in particular, higher verb ratios
 and certain clitic patterns showed statistically significant differences between polarized and non-polarized texts
 (see Figure~\ref{fig:morph_feature_importance} for feature importances and Figure~\ref{fig:morph_roc_comparison} for ROC comparison).
-However, in our experiments, the hybrid ensemble did not consistently outperform the pure MARBERTv2 K-fold ensemble
-(Figure~\ref{fig:morph_ensemble_cm} shows confusion matrices for all ensemble strategies).
-We attribute this to MARBERTv2's strong performance on dialectal Arabic already capturing much of the relevant linguistic signal,
-and the relatively small gains from morphological features not justifying the added complexity.
-Nonetheless, the morphological analysis provided valuable interpretability insights and identified challenging cases where both models fail
-(Figure~\ref{fig:morph_prediction_analysis}), which could inform future data collection and model improvement efforts.
 
 \subsubsection{Subtask 2: Multi-label Polarization Type}
 
@@ -291,9 +283,6 @@ As with subtask 2, this prompt is repeated for each of the six manifestation lab
 
 Results from this initial prompt-based Subtask~3 system are modest, with macro F1 scores around .54 on the train set validation split.
 
-\paragraph{Hardware.}
-All training runs were performed on Google Colab using an NVIDIA L4 GPU (24\,GB VRAM).
-Mixed-precision training (FP16) was enabled to reduce memory usage and accelerate training.
 
 \section{Results}
 
@@ -362,16 +351,19 @@ Results from the initial prompt-based Subtask~3 system are modest, with macro F1
 
 \section{Discussion}
 
-\paragraph{Dataset selection and impact.}
-Restricting to ARB ensures consistent linguistic phenomena (dialects, orthography) and reduces domain mismatch.
-However, label sparsity and multi-label imbalance in Subtasks~2--3 make macro-F1 optimization challenging. The relatively small dataset size (3,380 instances) limits the ability to train large models from scratch but is well-suited for fine-tuning pretrained transformers like MARBERTv2.
+\paragraph{The selection of your dataset and its impact on system performance.}
+We used only the official Arabic (ARB) dataset provided by the POLAR @ SemEval-2026 organizers, consisting of 3,380 training instances for Subtask~1 with a moderate class imbalance (1,868 non-polarized vs.\ 1,512 polarized). We initially attempted to expand the dataset by translating examples from other languages in the competition, but this approach did not yield performance improvements and was abandoned (as discussed in our milestone report). 
 
-\paragraph{Selection of approach: advantages and disadvantages.}
-We chose MARBERTv2 as our primary model because it is specifically pretrained on dialectal Arabic social media text, making it well-suited for our task. The advantages include: (i) strong baseline performance without extensive feature engineering, (ii) ability to capture contextual nuances in Arabic dialects, and (iii) efficient fine-tuning with limited data. The main disadvantages are: (i) computational requirements for training multiple folds/snapshots, (ii) limited interpretability compared to feature-based models, and (iii) potential overfitting to training distribution given the moderate dataset size.
+The dataset's characteristics significantly impacted our approach: (i) the moderate size (3,380 instances) was sufficient for fine-tuning pretrained transformers like MARBERTv2 but too small for training large models from scratch; (ii) the class imbalance in Subtask~1 motivated our use of stratified K-fold cross-validation; (iii) severe label imbalance in Subtasks~2--3 necessitated specialized techniques like Asymmetric Loss and per-label threshold tuning; and (iv) the dialectal Arabic nature of the text validated our choice of MARBERTv2, which is specifically pretrained on Arabic Twitter data. The dataset's focus on a single language (Arabic) ensured consistent linguistic phenomena but limits generalizability to other languages.
 
-Our ensemble strategies (K-fold for Subtask 1, snapshot ensembling for Subtask 2) provide robustness at the cost of increased training time and complexity. The ASL loss function effectively handles class imbalance but requires careful hyperparameter tuning.
+\paragraph{The selection of your particular approach - what are the advantages/disadvantages of your method?}
+We chose MARBERTv2 as our primary model because it is specifically pretrained on dialectal Arabic social media text, making it well-suited for our task. The main advantages include: (i) strong baseline performance without extensive feature engineering, (ii) ability to capture contextual nuances in Arabic dialects, and (iii) efficient fine-tuning with limited data. The disadvantages are: (i) computational requirements for training multiple folds/snapshots, (ii) limited interpretability compared to feature-based models, and (iii) potential overfitting to the training distribution given the moderate dataset size.
 
-\paragraph{Comparison to existing systems.}
+Our ensemble strategies provide additional benefits and trade-offs. For Subtask~1, stratified K-fold ensembling (K=8) with soft voting reduced variance and improved stability across splits, achieving more robust predictions than single checkpoints. For Subtask~2, snapshot ensembling with cosine restarts enabled diversity without full retraining, and stacking with a meta-learner improved probability calibration for effective per-label thresholding. However, these techniques increase training time and system complexity.
+
+We experimented with preprocessing approaches and found important trade-offs: heavy morphological processing (using CAMeL Tools for clitic segmentation and lemmatization) reduced performance by removing surface-level intensity cues (elongations, creative spelling) and producing token sequences less aligned with MARBERT's pretraining distribution. A light normalization strategy preserved expressive signals and yielded stronger results. The Asymmetric Loss function effectively handles class imbalance in multi-label settings but requires careful hyperparameter tuning to balance precision and recall.
+
+\paragraph{Comparison of your results to the existing systems - discuss the results that have been reported in the Results section.}
 Our Subtask~1 macro F1 of 0.834 represents strong performance on binary polarization detection. The hybrid approach combining morphological features with transformers showed that MARBERTv2 already captures most linguistic signals, though morphological analysis provided valuable interpretability. For Subtask~2, our meta-ensemble with ASL achieved 0.6788 macro F1, substantially outperforming the simple snapshot average (0.3818) and the AraGPT2 prompt baseline (0.40-0.43), demonstrating the value of our multi-component approach.
 
 \paragraph{Morphological features and hybrid ensembles.}
@@ -393,11 +385,10 @@ For Subtask~1, fold ensembling reduced variance and improved stability across sp
 For Subtask~2, snapshot diversity plus stacking improved probability calibration and made per-label thresholding effective.
 
 \paragraph{Limitations of the proposed system.}
-Our Subtask~3 system remains a baseline and likely underperforms fine-tuned discriminative models.
-Across all subtasks, several limitations persist: (i) sarcasm and implicit polarization are difficult to detect, (ii) context-dependent references require external knowledge, (iii) our internal validation may not fully reflect real-world performance due to distribution shift, and (iv) the system is language-specific and does not generalize to other languages without retraining.
+Our system has several notable limitations. First, the Subtask~3 system remains a basic prompt-based baseline and likely underperforms compared to fine-tuned discriminative models similar to our Subtask~2 approach. Second, across all subtasks, our models struggle with implicit polarization signals—sarcasm, irony, and subtle cultural references are difficult to detect without external world knowledge. Third, our internal validation may not fully reflect real-world performance due to potential distribution shift between the training set and actual deployment scenarios. Fourth, the system is language-specific and does not generalize to other languages without complete retraining and potentially different architectural choices. Fifth, the ensemble approaches, while improving performance, significantly increase inference time and computational costs, which may be prohibitive for real-time applications. Finally, the limited interpretability of transformer-based models makes it difficult to understand specific failure modes or provide explanations for individual predictions.
 
-\paragraph{Potential improvements with more time and resources.}
-With additional time and resources, we would: (i) implement a MARBERTv2 multi-label model for Subtask~3 using the same ASL+snapshot+stacking approach that succeeded for Subtask~2; (ii) explore multi-task learning across all three subtasks to leverage shared representations; (iii) add calibration methods (e.g., temperature scaling) and more principled threshold optimization strategies; (iv) incorporate dialect and emoji features more directly through auxiliary prediction heads; (v) experiment with larger Arabic language models and data augmentation techniques; and (vi) conduct more extensive error analysis to identify and address systematic failure modes.
+\paragraph{Potential improvements on the system if you had more time and resources.}
+With additional time and resources, we would pursue several improvements: (i) implement a MARBERTv2 multi-label model for Subtask~3 using the same ASL+snapshot+stacking approach that succeeded for Subtask~2, which would likely yield substantial improvements over the current prompt-based baseline; (ii) explore multi-task learning across all three subtasks to leverage shared representations and improve data efficiency; (iii) add calibration methods (e.g., temperature scaling) and more principled threshold optimization strategies beyond simple grid search; (iv) incorporate dialect identification and emoji sentiment features more directly through auxiliary prediction heads or multi-task objectives; (v) experiment with larger Arabic language models (e.g., larger variants of ARBERT, or Arabic-adapted versions of multilingual models) and advanced data augmentation techniques like back-translation or controlled paraphrasing; (vi) conduct more extensive error analysis to identify and address systematic failure modes, potentially creating additional training data for challenging cases; and (vii) investigate knowledge distillation to compress the ensemble models into a single efficient model for deployment while maintaining most of the performance gains.
 
 \section{Conclusion}
 
