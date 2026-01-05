@@ -76,24 +76,27 @@ where excessive normalization may remove stylistic cues that correlate with pola
 
 Polarization refers to the divergence of attitudes away from the center toward more extreme group-aligned positions. In online settings, anonymity, rapid information diffusion, and algorithmic amplification can increase hostile inter-group discourse and intensify the spread of harmful narratives. Detecting polarization in multilingual and multi-cultural social media contexts is therefore important for content moderation. Being able to detect polarization across different languages and cultures, is challenging as it manifests differently,  making this an important area of research.
 
-This report describes our work in POLAR @ SemEval-2026 (Task~9): Detecting Multilingual, Multicultural, and Multievent Online Polarization \cite{polar-semeval-2026}. We focus exclusively on the Arabic (ARB) dataset and address all three subtasks with varying degrees of depth. Subtask 1 involves binary classification to determine whether a social media post exhibits polarized language. For this subtask, we developed an extensive ensemble approach based on fine-tuning MARBERTv2 with stratified K-fold cross-validation and soft voting, achieving strong performance with a macro F1-score of 0.8264 on the competition's validation set. We also explored hybrid models combining transformer-based representations with traditional machine learning on morphological features extracted via CAMeL Tools, though these did not yield substantial improvements over the pure transformer ensemble.
+This report describes our work in POLAR @ SemEval-2026 (Task~9): Detecting Multilingual, Multicultural, and Multievent Online Polarization \cite{polar-semeval-2026}. We focus exclusively on the Arabic (ARB) dataset and address all three subtasks with varying degrees of depth. Subtask 1 involves binary classification to determine whether a social media post exhibits polarized language. For this subtask, we developed an extensive ensemble approach based on fine-tuning MARBERTv2 with stratified K-fold cross-validation and soft voting, achieving strong performance with a macro F1-score of 0.834. We also explored hybrid models combining transformer-based representations with traditional machine learning on morphological features extracted via CAMeL Tools, though these did not yield substantial improvements over the pure transformer ensemble.
 
-For Subtask 2, which requires multi-label classification of polarization types (political, racial/ethnic, religious, gender/sexual, and other), we initially explored prompt-based approaches using AraGPT2 before developing a sophisticated system using MARBERTv2 combining Asymmetric Loss to handle class imbalance, snapshot ensembling with cosine restarts, a stacked meta-learner, and per-label threshold tuning. This approach achieved a macro F1-score of 0.6082 on the competition's validation set, demonstrating effective handling of the multi-label nature and class imbalance inherent in this subtask.
+For Subtask 2, which requires multi-label classification of polarization types (political, racial/ethnic, religious, gender/sexual, and other), we initially explored prompt-based approaches using AraGPT2 before developing a sophisticated system combining Asymmetric Loss to handle class imbalance, snapshot ensembling with cosine restarts, a stacked meta-learner, and per-label threshold tuning. This approach achieved a macro F1-score of 0.6788 on our validation set, demonstrating effective handling of the multi-label nature and class imbalance inherent in this subtask.
 
-Subtask 3, which involves predicting manifestations of polarization (stereotype, vilification, dehumanization, extreme language, lack of empathy, and invalidation), received less extensive treatment due to time constraints. We provide an initial prompt-based baseline using AraGPT2, achieving lackluster results with a macro F1-score of 0.2962. The weaker performance on this subtask highlights the complexity of identifying fine-grained linguistic manifestations of polarization and suggests directions for future work.
+Subtask 3, which involves predicting manifestations of polarization (stereotype, vilification, dehumanization, extreme language, lack of empathy, and invalidation), received less extensive treatment due to time constraints. We provide an initial prompt-based baseline using AraGPT2, achieving modest results with a macro F1-score around 0.56. The weaker performance on this subtask highlights the complexity of identifying fine-grained linguistic manifestations of polarization and suggests directions for future work.
 
 Beyond reporting final metrics, this report documents our process including the things we tried to no avail. We provide detailed descriptions of our methods and ablation studies to facilitate reproducibility and inform future research on Arabic polarization detection.
 
 \section{Related Work}
 
-Polarization detection overlaps with stance detection, toxicity modeling, and hate-speech research, but is distinct in targeting
-language that intensifies inter-group division and hostility \cite{vasist2023polarizing}.
-In Arabic NLP, dialectal variation, orthographic ambiguity, and code-switching complicate modeling \cite{farghaly2009arabic}.
-Transformer models pretrained on Arabic social media have become the dominant approach; MARBERT and its variants are particularly effective
-because they are trained on large amounts of dialectal user-generated content \cite{abdulmageed2021arbert,alshenafi2024rasid}.
-For prompt-based baselines, AraGPT2 is an Arabic GPT-style language model that can be adapted for generative classification \cite{antoun2021aragpt2,alhariri2024smash}.
-On the preprocessing side, CAMeL Tools provides robust morphological analysis and segmentation utilities for Arabic \cite{obeid2020cameltools}.
-Finally, for multi-label learning under class imbalance and negative-label noise, Asymmetric Loss (ASL) down-weights easy negatives and can improve macro-F1 \cite{ridnik2021asl}.
+Polarization detection is related to stance detection, toxicity modeling, and hate-speech research, but it targets a specific communicative function: language that increases inter-group division through antagonistic framing, derogation, and escalation. Because polarization is often expressed implicitly and through culturally situated cues, effective systems typically need both robust modeling of informal social-media Arabic and careful handling of label imbalance in multi-label settings.
+
+Prior work on polarization and harmful discourse provides motivation for building culturally aware detectors. Vasist et al.~\cite{vasist2023polarizing} study how political disinformation and hate speech interact with polarized online environments across countries, emphasizing that polarization frequently manifests through hostile inter-group narratives rather than only explicit slurs. Their findings support the need for detection methods that generalize across contexts while remaining sensitive to language- and culture-specific realizations of conflict.
+
+Arabic NLP introduces additional difficulties that are especially salient for social-media polarization. Farghaly and Shaalan~\cite{farghaly2009arabic} survey challenges such as dialectal variation, orthographic ambiguity, rich morphology, and inconsistent spelling in user-generated text. These properties increase sparsity for traditional feature-based methods and make pretraining on large-scale informal Arabic particularly valuable.
+
+Transformer models pretrained on Arabic, and especially on dialectal social media, have become the dominant approach for downstream classification tasks. Abdul-Mageed et al.~\cite{abdulmageed2021arbert} introduced ARBERT and MARBERT, showing strong performance across multiple Arabic benchmarks, with MARBERT’s Twitter-focused pretraining making it particularly suitable for noisy dialectal input. In stance detection—an adjacent problem that shares pragmatic and topical signals with polarization—systems based on MARBERT remain highly competitive; for example, AlShenaifi et al.~\cite{alshenafi2024rasid} report strong StanceEval results using MARBERT fine-tuning, reinforcing our choice of a MARBERT-family encoder for Arabic polarization.
+
+Prompting Arabic generative language models has also been explored as an alternative to supervised fine-tuning. Antoun et al.~\cite{antoun2021aragpt2} presented AraGPT2, enabling Arabic text generation and providing a foundation for instruction- and prompt-based strategies. In the StanceEval shared task, Al~Hariri and Abu~Farha~\cite{alhariri2024smash} show that prompt engineering with LLMs can be effective but is sensitive to prompt formulation and inference choices. We therefore treat prompting as a lightweight baseline and rely primarily on discriminative fine-tuning for our best systems.
+
+Finally, our multi-label subtasks face substantial label imbalance, where negative labels dominate and standard binary cross-entropy can overemphasize easy negatives. Ridnik et al.~\cite{ridnik2021asl} proposed Asymmetric Loss to down-weight confident negatives, improving learning in imbalanced multi-label settings. For Arabic-specific linguistic analysis and preprocessing experiments, we rely on CAMeL Tools~\cite{obeid2020cameltools}, which provides morphological analysis and related utilities; although heavy morphological processing can sometimes harm performance on informal text, these tools are useful for controlled ablations and interpretability-oriented feature extraction.
 
 \section{Methodology}
 
@@ -102,21 +105,21 @@ Finally, for multi-label learning under class imbalance and negative-label noise
 POLAR defines three subtasks for multilingual polarization detection. Subtask 1 is binary classification: determine whether a text is polarized or non-polarized. Subtask 2 is multi-label classification over polarization types and targets, including political, racial/ethnic, religious, gender/sexual, and other categories. Subtask 3 is multi-label classification over polarization manifestations: stereotype, vilification, dehumanization, extreme language, lack of empathy, and invalidation. The official shared-task metric for all subtasks is macro F1 \cite{polar-semeval-2026}.
 
 We use only the official Arabic (ARB) data released by the organizers.
-For Subtask~1, the labeled training set contains 3,380 instances with columns \texttt{id}, \texttt{text}, and \texttt{polarization}.
-From our training splits, the class distribution is moderately imbalanced with 1,868 non-polarized vs.\ 1,512 polarized instances (see Appendix Figure~\ref{fig:label_dist_bar}).
+For Subtask~1, the labeled training set contains \textbf{3,380} instances with columns \texttt{id}, \texttt{text}, and \texttt{polarization}.
+From our training splits, the class distribution is moderately imbalanced with \textbf{1,868} non-polarized vs.\ \textbf{1,512} polarized instances.
 
-For Subtask~2, the labeled training set has the same instances with five binary label columns
+For Subtask~2, the labeled training set has the same instance count (\textbf{3,380}) with five binary label columns
 (\texttt{political}, \texttt{racial/ethnic}, \texttt{religious}, \texttt{gender/sexual}, \texttt{other}).
-The provided development file used for submission is unlabeled and contains 169 instances in our pipeline.
+The provided development file used for submission is unlabeled and contains \textbf{169} instances in our pipeline.
 Subtask~3 follows the same format with six binary label columns (manifestations).
 
 \subsection{Exploratory Data Analysis}
 
 We performed exploratory analysis to understand the properties of Arabic social-media text and its interaction with labels.
 Consistent with user-generated content, texts are typically short with a long-tail of longer entries (Appendix Figure~\ref{fig:text_length_dist}).
-We also observed minimal code-switching (Latin characters and mixed digits) and no common social-media artifacts such as URLs, mentions, and hashtags
-(Appendix Figures~\ref{fig:latin_presence} and~\ref{fig:mention_presence}) which indicate a relatively clean dataset.
-These observations motivated model choices that are known to work well for dialectal Arabic.
+We also observed frequent code-switching (Latin characters and mixed digits) and common social-media artifacts such as URLs, mentions, and hashtags
+(Appendix Figures~\ref{fig:latin_presence} and~\ref{fig:mention_presence}).
+These observations motivated (i) a robust normalization strategy for noisy text and (ii) model choices that are known to work well for dialectal Arabic.
 
 \subsection{Preprocessing and Feature Engineering}
 
@@ -441,40 +444,40 @@ Future work will focus on developing optimized discriminative models for Subtask
 \begin{thebibliography}{10}
 
 \bibitem[Abdul-Mageed et~al.(2021)]{abdulmageed2021arbert}
-Muhammad Abdul-Mageed, AbdelRahim Elmadany, and ElMoemen B.~Nagoudi.
+Muhammad Abdul-Mageed, AbdelRahim Elmadany, and El Moatez Billah Nagoudi.
 \newblock 2021.
 \newblock ARBERT \& MARBERT: Deep Bidirectional Transformers for Arabic.
-\newblock In \emph{Proceedings of ACL 2021}.
+\newblock In \emph{Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing (Volume 1: Long Papers)}, pages 7088--7105. Association for Computational Linguistics. %
 
 \bibitem[AlShenaifi et~al.(2024)]{alshenafi2024rasid}
-N.~AlShenaifi, N.~Alangari, and H.~Al-Negheimish.
+Nouf AlShenaifi, Nourah Alangari, and Hadeel Al-Negheimish.
 \newblock 2024.
 \newblock Rasid at StanceEval: Fine-tuning MARBERT for Arabic Stance Detection.
-\newblock In \emph{Proceedings of the Second Arabic Natural Language Processing Conference}, pages 828--831.
+\newblock In \emph{Proceedings of the Second Arabic Natural Language Processing Conference}, pages 828--831. Association for Computational Linguistics.
 
 \bibitem[Al~Hariri and Abu~Farha(2024)]{alhariri2024smash}
-Y.~Al~Hariri and I.~Abu~Farha.
+Youssef Al~Hariri and Ibrahim Abu~Farha.
 \newblock 2024.
 \newblock SMASH at StanceEval 2024: Prompt Engineering LLMs for Arabic Stance Detection.
-\newblock In \emph{Proceedings of the Second Arabic Natural Language Processing Conference}, pages 800--806.
+\newblock In \emph{Proceedings of the Second Arabic Natural Language Processing Conference}, pages 800--806. Association for Computational Linguistics.
 
 \bibitem[Antoun et~al.(2021)]{antoun2021aragpt2}
 Wissam Antoun, Fady Baly, and Hazem Hajj.
 \newblock 2021.
 \newblock AraGPT2: Pre-trained Transformer for Arabic Language Generation.
-\newblock In \emph{Proceedings of WANLP 2021}.
+\newblock In \emph{Proceedings of the Sixth Arabic Natural Language Processing Workshop (WANLP)}, pages (as in proceedings). %
 
 \bibitem[Farghaly and Shaalan(2009)]{farghaly2009arabic}
 Ali Farghaly and Khaled Shaalan.
 \newblock 2009.
 \newblock Arabic Natural Language Processing: Challenges and Solutions.
-\newblock In \emph{Proceedings of the 2009 Workshop on Arabic Natural Language Processing}.
+\newblock \emph{ACM Transactions on Asian Language Information Processing (TALIP)}, 8(4), Article 14.
 
 \bibitem[Obeid et~al.(2020)]{obeid2020cameltools}
-O.~Obeid, K.~Eryani, N.~Zalmout, S.~Khalifa, D.~Taji, B.~Alhafni, B.~AlKhamissi, and N.~Habash.
+Omar Obeid, Fadhl Eryani, Nizar Zalmout, Salam Khalifa, Dima Taji, Bashar Alhafni, Bilal Alkhamissi, and Nizar Habash.
 \newblock 2020.
 \newblock CAMeL Tools: An Open Source Python Toolkit for Arabic Natural Language Processing.
-\newblock In \emph{Proceedings of LREC 2020}.
+\newblock In \emph{Proceedings of the 12th Language Resources and Evaluation Conference (LREC 2020)}, pages 7022--7032.
 
 \bibitem[POLAR @ SemEval(2025)]{polar-semeval-2026}
 POLAR @ SemEval.
@@ -485,13 +488,13 @@ POLAR @ SemEval.
 Tal Ridnik, Emanuel Ben-Baruch, Nadav Zamir, Asaf Noy, Itamar Friedman, Matan Protter, and Lior Wolf.
 \newblock 2021.
 \newblock Asymmetric Loss for Multi-Label Classification.
-\newblock In \emph{Proceedings of ICCV 2021}.
+\newblock In \emph{Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV 2021)}.
 
-\bibitem[Vasist et~al.(2023)]{vasist2023polarizing}
-P.~N.~Vasist, D.~Chatterjee, and S.~Krishnan.
-\newblock 2023.
+\bibitem[Vasist et~al.(2024)]{vasist2023polarizing}
+Pramukh Nanjundaswamy Vasist, Debashis Chatterjee, and Satish Krishnan.
+\newblock 2024.
 \newblock The Polarizing Impact of Political Disinformation and Hate Speech: A Cross-country Configural Narrative.
-\newblock \emph{Information Systems Frontiers}, pages 1--26.
+\newblock \emph{Information Systems Frontiers}, 26(2):663--688.
 
 \bibitem[Al-Shammari(2007)]{Shammari2007}
 E.~Al-Shammari.
